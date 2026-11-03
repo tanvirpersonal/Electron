@@ -36,7 +36,7 @@ function addPrimitive(type){
   case 'ring':geometry=new THREE.RingGeometry(.35,.7,48);name='Ring';offset=.01;break;
   case 'icosahedron':geometry=new THREE.IcosahedronGeometry(.7,1);name='Icosphere';offset=.7;break;
   case 'dodecahedron':geometry=new THREE.DodecahedronGeometry(.7,0);name='Dodecahedron';offset=.7;break;
-  case 'octahedron':geometry=new THREE.OctahedronGeometry(.7,0);name='Octahedron';offset=.7;break;
+  case 'octahedron':geometry=new THREE.OctahedronGeometry(.7,0);name='Octahedron';offset=.7;break;\n  case 'tetrahedron':geometry=new THREE.TetrahedronGeometry(.7,0);name='Tetrahedron';offset=.7;break;\n  case 'torus-knot':geometry=new THREE.TorusKnotGeometry(.48,.16,96,12);name='Torus Knot';offset=.7;break;\n  case 'prism':geometry=new THREE.CylinderGeometry(.65,.65,1,3,1);name='Triangular Prism';offset=.5;break;\n  case 'tube':geometry=new THREE.CylinderGeometry(.5,.5,1,32,1,true);name='Tube';offset=.5;break;
   default:geometry=new THREE.BoxGeometry(1,1,1);name='Cube';offset=.5;
  }
  const mesh=new THREE.Mesh(geometry,material);mesh.position.y=offset;addObject(mesh,name);toast(name+' added');
@@ -97,7 +97,7 @@ function setMode(m){transform.setMode(m);document.querySelectorAll('[data-mode]'
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 $('#uniform-toggle').onclick=()=>{uniform=!uniform;$('#uniform-toggle').setAttribute('aria-pressed',String(uniform));refreshFields()};
 $('#mirror-toggle').onclick=()=>{mirror=!mirror;$('#mirror-toggle').setAttribute('aria-pressed',String(mirror));toast(mirror?'Mirror scaling enabled':'Mirror scaling disabled')};
-$('#add-cube').onclick=()=>addPrimitive($('#shape-select')?.value||'cube');
+$('#add-cube').onclick=()=>addPrimitive($('#shape-select')?.value||'cube');\ndocument.querySelectorAll('[data-shape]').forEach(button=>button.addEventListener('click',()=>addPrimitive(button.dataset.shape)));
 
 $('#toggle-left').onclick=()=>{document.querySelector('.workspace').classList.toggle('hide-left');$('#toggle-left').classList.toggle('active',!document.querySelector('.workspace').classList.contains('hide-left'));requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))};
 $('#toggle-right').onclick=()=>{document.querySelector('.workspace').classList.toggle('hide-right');$('#toggle-right').classList.toggle('active',!document.querySelector('.workspace').classList.contains('hide-right'));requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))};
