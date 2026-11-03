@@ -79,3 +79,33 @@ button,input{touch-action:manipulation}
  .action-btn{padding:6px 8px;margin-bottom:4px}
  .empty-state{padding:15px 9px}
 }
+
+/* Panel visibility and immersive viewport */
+.workspace.hide-left{grid-template-columns:0 minmax(0,1fr) 285px}
+.workspace.hide-right{grid-template-columns:220px minmax(0,1fr) 0}
+.workspace.hide-left.hide-right{grid-template-columns:0 minmax(0,1fr) 0}
+.workspace.hide-left .left-panel,.workspace.hide-right .right-panel{display:none}
+.workspace.hide-left.hide-right{grid-template-columns:0 minmax(0,1fr) 0}
+#app.immersive{position:fixed;inset:0;width:100vw;height:100dvh;z-index:9999;background:#090a0d}
+#app.immersive .topbar{display:none}
+#app.immersive .workspace,#app.immersive .workspace.hide-left,#app.immersive .workspace.hide-right{height:100dvh;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+#app.immersive .left-panel,#app.immersive .right-panel{display:none}
+#app.immersive .center{grid-row:1}
+#app.immersive .viewport-bottom{display:none}
+#app.immersive .viewport-toolbar{position:absolute;z-index:5;top:10px;left:10px;right:10px;width:auto;height:42px;background:#101116dd;border:1px solid #30323d;border-radius:9px;backdrop-filter:blur(12px)}
+#app.immersive #viewport{height:100%;width:100%}
+#app.immersive .toast{z-index:10001}
+@media (orientation:landscape) and (max-height:520px){
+ .workspace.hide-left{grid-template-columns:0 minmax(0,1fr) 220px}
+ .workspace.hide-right{grid-template-columns:132px minmax(0,1fr) 0}
+ .workspace.hide-left.hide-right{grid-template-columns:0 minmax(0,1fr) 0}
+}
+@media(max-width:760px){
+ .workspace.hide-left,.workspace.hide-right{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ .workspace.hide-left .left-panel,.workspace.hide-right .right-panel{display:none}
+ .workspace.hide-left.hide-right{grid-template-rows:minmax(0,1fr)}
+ .workspace.hide-left .center,.workspace.hide-right .center{grid-row:1}
+ .viewport-toolbar{gap:4px}
+ .viewport-toolbar .tool-group:last-child{gap:3px}
+ .viewport-toolbar .tool{width:29px;height:29px;font-size:13px}
+}
