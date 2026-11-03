@@ -1,54 +1,50 @@
-# Electron — 3D Asset Builder
+# Electron — Android 3D Asset Builder
 
-Electron is a desktop 3D asset builder powered by Electron, Three.js and Vite.
+Electron is an Android-first 3D asset builder powered by Three.js and Capacitor. The project targets Android phones and tablets; desktop installers and desktop runtime builds are not part of the project.
 
-## Current features
+## Current Android features
 
-- Realtime 3D viewport with orbit, zoom and pan
-- Scene hierarchy, object selection, add, duplicate and delete
-- Move, rotate and scale gizmos (W / E / R)
+- Landscape-first Android workspace
+- Touch-friendly realtime 3D viewport with orbit, zoom and pan
+- Scene hierarchy and object selection
+- Add cube, sphere, cylinder, cone, torus, capsule, plane, circle, ring, icosphere, dodecahedron and octahedron
+- Move, rotate and scale gizmos
 - Numeric position, rotation and scale controls
-- Uniform scaling and mirror/negative-scale mode
+- Uniform scaling and mirror scaling
 - Import GLB, glTF and OBJ
-- Export scene as binary GLB
+- Export scene as binary GLB using Android share/download support
+- Hide side panels and immersive fullscreen viewport
 
 ## Requirements
 
-- Node.js 22 LTS (or newer supported Node 22 release)
-- npm
+- Node.js 22
+- Java 21
+- Android SDK / Android Studio (for local builds)
 
-## Run from source
+## Run the web layer locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Build locally
+## Build Android APK
 
 ```bash
+npm install
 npm run build
-npm run dist
+npx cap add android
+npx cap sync android
+cd android
+./gradlew assembleDebug
 ```
 
-Installers are written to the `release/` directory.
+The APK is generated at `android/app/build/outputs/apk/debug/app-debug.apk`.
 
-## Desktop installers
+## GitHub Actions
 
-GitHub Actions builds the app for:
-- Linux: AppImage and Debian package (.deb)
-- Windows: x64 NSIS installer (.exe)
-- macOS: DMG
+Every push to `main` and manual workflow dispatch builds a debug APK. Download the `Electron-Android-APK` artifact from the workflow run. The artifact contains `Electron.apk`.
 
-To publish downloadable installers, create and push a version tag:
+## Project direction
 
-```bash
-git tag v1.0.1
-git push origin v1.0.1
-```
-
-The workflow builds all three platforms and attaches the installers to the GitHub Release. A manual run from the Actions tab also builds downloadable workflow artifacts.
-
-## Current scope
-
-This is an early desktop MVP. Advanced mesh editing, undo/redo, project save/load, material editing, texture painting and sculpting are not implemented yet.
+Android is the only target platform. Upcoming work should prioritize touch interaction, mobile 3D manipulation, materials, textures, project workflows and performance on Android devices.
