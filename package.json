@@ -8,7 +8,9 @@
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
     "build": "vite build",
     "start": "electron .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dist": "electron-builder",
+    "pack": "electron-builder --dir"
   },
   "dependencies": {
     "three": "^0.180.0"
@@ -19,7 +21,53 @@
     "vite": "^7.1.0",
     "concurrently": "^9.2.1",
     "electron": "^39.0.0",
-    "wait-on": "^8.0.4"
+    "wait-on": "^8.0.4",
+    "electron-builder": "^26.0.12"
   },
-  "main": "main.cjs"
+  "main": "main.cjs",
+  "build": {
+    "appId": "com.tanvirpersonal.electron",
+    "productName": "Electron",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "main.cjs",
+      "preload.cjs",
+      "package.json"
+    ],
+    "asar": true,
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.graphics-design"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Graphics",
+      "maintainer": "Tanvir Rahman"
+    }
+  }
 }
