@@ -48,7 +48,7 @@ function setMode(m){transform.setMode(m);document.querySelectorAll('[data-mode]'
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 $('#uniform-toggle').onclick=()=>{uniform=!uniform;$('#uniform-toggle').setAttribute('aria-pressed',String(uniform));refreshFields()};
 $('#mirror-toggle').onclick=()=>{mirror=!mirror;$('#mirror-toggle').setAttribute('aria-pressed',String(mirror));toast(mirror?'Mirror scaling enabled':'Mirror scaling disabled')};
-$('#add-cube').onclick=()=>addCube();
+$('#add-cube').onclick=()=>addPrimitive($('#shape-select')?.value||'cube');
 
 $('#toggle-left').onclick=()=>{document.querySelector('.workspace').classList.toggle('hide-left');$('#toggle-left').classList.toggle('active',!document.querySelector('.workspace').classList.contains('hide-left'));requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))};
 $('#toggle-right').onclick=()=>{document.querySelector('.workspace').classList.toggle('hide-right');$('#toggle-right').classList.toggle('active',!document.querySelector('.workspace').classList.contains('hide-right'));requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))};
