@@ -109,3 +109,19 @@ button,input{touch-action:manipulation}
  .viewport-toolbar .tool-group:last-child{gap:3px}
  .viewport-toolbar .tool{width:29px;height:29px;font-size:13px}
 }
+
+.scene-add{display:flex;align-items:center;gap:5px}
+.shape-select{max-width:100px;min-width:0;height:26px;padding:0 5px;border-radius:5px;border:1px solid #343644;background:#20212a;color:#d6d2e4;font:9px 'DM Mono';outline:none}
+@media(max-width:760px){.scene-add{gap:3px}.shape-select{max-width:86px;font-size:8px}}
+@media(max-width:760px){
+ .workspace.hide-left{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 215px}
+ .workspace.hide-left .left-panel{display:none}
+ .workspace.hide-left .center{grid-row:1}
+ .workspace.hide-left .right-panel{grid-row:2}
+ .workspace.hide-right{grid-template-columns:minmax(0,1fr);grid-template-rows:86px minmax(0,1fr)}
+ .workspace.hide-right .right-panel{display:none}
+ .workspace.hide-right .left-panel{grid-row:1}
+ .workspace.hide-right .center{grid-row:2}
+ .workspace.hide-left.hide-right{grid-template-rows:minmax(0,1fr)}
+ .workspace.hide-left.hide-right .center{grid-row:1}
+}
