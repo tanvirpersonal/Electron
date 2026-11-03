@@ -31,6 +31,10 @@ jobs:
         run: npm run build
       - name: Generate Android project
         run: npx cap add android
+      - name: Generate Electron launcher icons
+        run: |
+          python3 -m pip install --quiet cairosvg
+          python3 scripts/generate-android-icon.py
       - name: Lock app orientation to landscape
         run: |
           python3 - <<'PY'
