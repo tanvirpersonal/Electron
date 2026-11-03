@@ -10,10 +10,14 @@
     "start": "electron .",
     "typecheck": "tsc --noEmit",
     "dist": "electron-builder",
-    "pack": "electron-builder --dir"
+    "pack": "electron-builder --dir",
+    "android:sync": "cap sync android",
+    "android:open": "cap open android"
   },
   "dependencies": {
-    "three": "^0.180.0"
+    "three": "^0.180.0",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
   },
   "devDependencies": {
     "@types/three": "^0.170.0",
@@ -22,7 +26,8 @@
     "concurrently": "^9.2.1",
     "electron": "^39.0.0",
     "wait-on": "^8.0.4",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "@capacitor/cli": "^7.4.3"
   },
   "main": "main.cjs",
   "build": {
