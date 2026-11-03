@@ -31,6 +31,28 @@ jobs:
         run: npm run build
       - name: Generate Android project
         run: npx cap add android
+      - name: Lock app orientation to landscape
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+
+          manifest = "android/app/src/main/AndroidManifest.xml"
+          android_ns = "http://schemas.android.com/apk/res/android"
+          ET.register_namespace("android", android_ns)
+          tree = ET.parse(manifest)
+          root = tree.getroot()
+          application = root.find("application")
+          if application is None:
+              raise SystemExit("Android manifest has no application element")
+          for activity in application.findall("activity"):
+              name = activity.get(f"{{{android_ns}}}name", "")
+              if name.endswith("MainActivity"):
+                  activity.set(f"{{{android_ns}}}screenOrientation", "landscape")
+                  break
+          else:
+              raise SystemExit("MainActivity not found in Android manifest")
+          tree.write(manifest, encoding="utf-8", xml_declaration=True)
+          PY
       - name: Sync Capacitor
         run: npx cap sync android
       - name: Build debug APK
@@ -38,10 +60,12 @@ jobs:
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug
+      - name: Rename APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk Electron.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Electron-Android-APK
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: Electron.apk
           if-no-files-found: error
           retention-days: 30
