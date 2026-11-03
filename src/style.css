@@ -46,3 +46,36 @@ button,input{touch-action:manipulation}
  #properties{grid-template-columns:1fr 1fr}
  .viewport-label{font-size:7px}
 }
+
+/* Native Android app is intentionally landscape-first. Keep a three-column editor
+   on short landscape screens so the 3D viewport remains the primary workspace. */
+@media (orientation:landscape) and (max-height:520px){
+ body{min-width:0;overflow:hidden}
+ .topbar{height:46px;padding:0 10px}
+ .brand-mark{width:27px;height:27px;font-size:17px}
+ .brand strong{font-size:10px}
+ .brand small{font-size:7px}
+ .ghost,.primary{padding:7px 9px;font-size:9px}
+ .workspace{height:calc(100dvh - 46px);grid-template-columns:132px minmax(0,1fr) 220px;grid-template-rows:minmax(0,1fr)}
+ .left-panel,.center,.right-panel{grid-row:1;min-height:0}
+ .left-panel{border-right:1px solid var(--line);border-bottom:0;overflow-y:auto}
+ .left-panel .panel-heading,.right-panel>.panel-heading{height:39px;padding:0 9px}
+ .object-list{display:block;height:auto;max-height:calc(100% - 77px);overflow-y:auto;padding:5px}
+ .object-item{width:100%;height:32px;min-width:0;padding:0 7px;font-size:9px}
+ .left-panel .panel-foot{height:32px}
+ .center{display:flex}
+ .viewport-toolbar{height:39px;padding:0 8px}
+ .tool{width:31px;height:29px}
+ .viewport-bottom{height:25px;font-size:7px;padding:0 8px}
+ .right-panel{border-left:1px solid var(--line);border-top:0;overflow-y:auto}
+ #properties{display:block}
+ .object-name{padding:7px 9px}
+ .prop-section{padding:8px 9px}
+ .section-title{margin-bottom:7px}
+ .prop-label{margin:7px 0 4px}
+ .axis-field{height:26px}
+ .toggle-row{margin-top:7px}
+ .hint{margin-top:6px}
+ .action-btn{padding:6px 8px;margin-bottom:4px}
+ .empty-state{padding:15px 9px}
+}
