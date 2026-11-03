@@ -125,3 +125,11 @@ button,input{touch-action:manipulation}
  .workspace.hide-left.hide-right{grid-template-rows:minmax(0,1fr)}
  .workspace.hide-left.hide-right .center{grid-row:1}
 }
+
+/* Android touch interaction */
+.touch-context{position:fixed;z-index:10010;display:flex;flex-direction:column;min-width:132px;padding:5px;border:1px solid #51456e;border-radius:10px;background:#17151f;box-shadow:0 12px 36px #0009}
+.touch-context[hidden]{display:none}
+.touch-context button{padding:11px 13px;text-align:left;border-radius:6px;background:transparent;color:#eee;font-size:12px}
+.touch-context button:active{background:#34294c}
+#multi-select-btn{font-size:15px}
+@media(max-width:760px){.touch-context button{padding:13px 15px;font-size:13px}}
