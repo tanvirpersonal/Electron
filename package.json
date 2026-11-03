@@ -1,7 +1,7 @@
 {
   "name": "electron-studio",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ELECTRON — a browser-based 3D asset studio",
   "type": "module",
   "scripts": {
