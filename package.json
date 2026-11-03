@@ -1,18 +1,15 @@
 {
-  "name": "electron-studio",
+  "name": "electron-android",
   "private": true,
-  "version": "1.0.1",
-  "description": "ELECTRON — a browser-based 3D asset studio",
+  "version": "1.0.2",
+  "description": "Electron — Android-first 3D asset builder",
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && electron .\"",
+    "dev": "vite --host 0.0.0.0",
     "build": "vite build",
-    "start": "electron .",
-    "typecheck": "tsc --noEmit",
-    "dist": "electron-builder",
-    "pack": "electron-builder --dir",
-    "android:sync": "cap sync android",
-    "android:open": "cap open android"
+    "preview": "vite preview --host 0.0.0.0",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android"
   },
   "dependencies": {
     "three": "^0.180.0",
@@ -23,56 +20,6 @@
     "@types/three": "^0.170.0",
     "typescript": "^5.6.3",
     "vite": "^7.1.0",
-    "concurrently": "^9.2.1",
-    "electron": "^39.0.0",
-    "wait-on": "^8.0.4",
-    "electron-builder": "^26.0.12",
     "@capacitor/cli": "^7.4.3"
-  },
-  "main": "main.cjs",
-  "build": {
-    "appId": "com.tanvirpersonal.electron",
-    "productName": "Electron",
-    "directories": {
-      "output": "release"
-    },
-    "files": [
-      "dist/**/*",
-      "main.cjs",
-      "preload.cjs",
-      "package.json"
-    ],
-    "asar": true,
-    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
-    "mac": {
-      "target": [
-        "dmg"
-      ],
-      "category": "public.app-category.graphics-design"
-    },
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        }
-      ]
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
-      "category": "Graphics",
-      "maintainer": "Tanvir Rahman"
-    }
   }
 }
