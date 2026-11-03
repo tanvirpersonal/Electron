@@ -116,6 +116,11 @@ async function toggleFullscreen(){
 $('#fullscreen-btn').onclick=toggleFullscreen;
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement;$('#app').classList.toggle('immersive',active);$('#fullscreen-btn').classList.toggle('active',active);requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))});
 $('#camera-reset').onclick=()=>{camera.position.set(7,6,8);orbit.target.set(0,.8,0);orbit.update();toast('Camera reset')};
+function showHome(){if(document.fullscreenElement)document.exitFullscreen();$('#app').classList.remove('immersive');document.body.classList.add('home-view')}
+function resumeScene(){document.body.classList.remove('home-view');requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))}
+$('#home-btn').onclick=showHome;
+$('#resume-scene').onclick=resumeScene;
+$('#home-new-scene').onclick=()=>{$('#new-scene').click();resumeScene()};
 
 
 $('#duplicate-btn').onclick=()=>{if(!selectedObjects.length)return;const copies=selectedObjects.map(o=>{const c=o.clone(true);c.position.x+=1;return addObject(c,o.name+' copy')});selected=copies.at(-1);selectedObjects=copies;transform.attach(selected);renderList();toast(copies.length+' object(s) duplicated')};
