@@ -16,7 +16,9 @@ const fill=new THREE.DirectionalLight(0x8a72ff,1.2);fill.position.set(-6,3,-4);s
 const grid=new THREE.GridHelper(20,40,0x49415e,0x242630);scene.add(grid);
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({opacity:.18}));floor.rotation.x=-Math.PI/2;floor.position.y=-.012;floor.receiveShadow=true;scene.add(floor);
 const transform=new TransformControls(camera,renderer.domElement);scene.add(transform.getHelper());transform.addEventListener('dragging-changed',e=>orbit.enabled=!e.value);transform.addEventListener('objectChange',refreshFields);
-let objects=[],selected=null,selectedObjects=[],multiSelect=false,uniform=false,mirror=false,nextId=1;\nlet touchDrag=null,longPressTimer=null,contextTarget=null;\nconst raycaster=new THREE.Raycaster(),pointerNdc=new THREE.Vector2();
+let objects=[],selected=null,selectedObjects=[],multiSelect=false,uniform=false,mirror=false,nextId=1;
+let touchDrag=null,longPressTimer=null,contextTarget=null;
+const raycaster=new THREE.Raycaster(),pointerNdc=new THREE.Vector2();
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2200)}
 function addObject(obj,name){obj.name=name+' '+nextId++;obj.traverse?.(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});scene.add(obj);objects.push(obj);select(obj);renderList();return obj}
 function makeMaterial(){return new THREE.MeshStandardMaterial({color:0x9b83e6,roughness:.55,metalness:.12})}
@@ -40,9 +42,56 @@ function addPrimitive(type){
  const mesh=new THREE.Mesh(geometry,material);mesh.position.y=offset;addObject(mesh,name);toast(name+' added');
 }
 function addCube(){addPrimitive('cube')}
-function select(o){selected=o;selectedObjects=[o];transform.attach(o);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=o.name;renderList();refreshFields()}\nfunction toggleMultiSelection(o){if(!multiSelect){select(o);return}const i=selectedObjects.indexOf(o);if(i>=0){selectedObjects.splice(i,1);if(selected===o)selected=selectedObjects.at(-1)||null}else{selectedObjects.push(o);selected=o}if(selected){transform.attach(selected);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=selected.name;refreshFields()}else{transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false}renderList()}\n$('#multi-select-btn').onclick=()=>{multiSelect=!multiSelect;$('#multi-select-btn').classList.toggle('active',multiSelect);if(!multiSelect&&selectedObjects.length>1)selectedObjects=[selected].filter(Boolean);renderList();toast(multiSelect?'Multi-select on: tap objects to add':'Multi-select off')};
+function select(o){selected=o;selectedObjects=[o];transform.attach(o);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=o.name;renderList();refreshFields();syncMaterialEditor()}
+function toggleMultiSelection(o){if(!multiSelect){select(o);return}const i=selectedObjects.indexOf(o);if(i>=0){selectedObjects.splice(i,1);if(selected===o)selected=selectedObjects.at(-1)||null}else{selectedObjects.push(o);selected=o}if(selected){transform.attach(selected);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=selected.name;refreshFields()}else{transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false}renderList()}
+$('#multi-select-btn').onclick=()=>{multiSelect=!multiSelect;$('#multi-select-btn').classList.toggle('active',multiSelect);if(!multiSelect&&selectedObjects.length>1)selectedObjects=[selected].filter(Boolean);renderList();syncMaterialEditor();toast(multiSelect?'Multi-select on: tap objects to add':'Multi-select off')};
 function renderList(){const list=$('#object-list');list.innerHTML='';objects.forEach(o=>{const b=document.createElement('button');b.className='object-item'+(selectedObjects.includes(o)?' selected':'');const icon=document.createElement('span');icon.className='cube-icon';icon.textContent='⬡';const label=document.createElement('span');label.textContent=o.name;b.append(icon,label);b.onclick=()=>toggleMultiSelection(o);list.append(b)});$('#object-count').textContent=objects.length+' OBJECT'+(objects.length===1?'':'S')}
 function makeFields(id,axes,values,type){const host=$(id);host.innerHTML='';axes.forEach((axis,i)=>{const label=document.createElement('label');label.className='axis-field';const b=document.createElement('b');b.textContent=axis;b.style.color=['#e28d8d','#8fcf9c','#8da9ed'][i];const input=document.createElement('input');input.type='number';input.step=type==='rotation'?1:.1;input.value=Number(values[i].toFixed(3));input.addEventListener('change',()=>{if(!selected)return;let v=Number(input.value)||0;const target=type==='position'?selected.position:type==='rotation'?selected.rotation:selected.scale;if(type==='rotation')target[axis.toLowerCase()]=THREE.MathUtils.degToRad(v);else if(type==='scale'&&uniform){if(!mirror)v=Math.max(.001,v);selected.scale.setScalar(v)}else{if(type==='scale'&&!mirror)v=Math.max(.001,v);target[axis.toLowerCase()]=v}refreshFields()});label.append(b,input);host.append(label)})}
+
+function getSelectedMeshes(){
+ const roots=selectedObjects.length?selectedObjects:(selected?[selected]:[]);
+ const meshes=[];
+ roots.forEach(root=>root.traverse(node=>{if(node.isMesh)meshes.push(node)}));
+ return meshes;
+}
+function eachSelectedMaterial(callback){
+ const meshes=getSelectedMeshes();
+ if(!meshes.length)return false;
+ meshes.forEach(mesh=>{
+  const list=Array.isArray(mesh.material)?mesh.material:[mesh.material];
+  const updated=list.map(material=>{const copy=material.clone();callback(copy);return copy});
+  mesh.material=Array.isArray(mesh.material)?updated:updated[0];
+ });
+ return true;
+}
+function syncMaterialEditor(){
+ const meshes=getSelectedMeshes();
+ const mats=meshes.flatMap(mesh=>Array.isArray(mesh.material)?mesh.material:[mesh.material]).filter(Boolean);
+ const mat=mats[0];
+ const color=mat?.color?.getHexString?.()||'9b83e6';
+ $('#material-color').value='#'+color;
+ $('#roughness-value').textContent=mat?.roughness==null?'—':mat.roughness.toFixed(2);
+ $('#metalness-value').textContent=mat?.metalness==null?'—':mat.metalness.toFixed(2);
+ $('#opacity-value').textContent=mat?.opacity==null?'—':mat.opacity.toFixed(2);
+ $('#roughness-input').value=mat?.roughness??.55;
+ $('#metalness-input').value=mat?.metalness??.12;
+ $('#opacity-input').value=mat?.opacity??1;
+}
+function applyMaterialProperty(property,value){
+ if(!eachSelectedMaterial(mat=>{
+  if(property==='color'&&mat.color)mat.color.set(value);
+  else if(property==='roughness'&&'roughness' in mat)mat.roughness=value;
+  else if(property==='metalness'&&'metalness' in mat)mat.metalness=value;
+  else if(property==='opacity'){mat.opacity=value;mat.transparent=value<.999;mat.depthWrite=value>=.999}
+  mat.needsUpdate=true;
+ }))return;
+ syncMaterialEditor();
+}
+$('#material-color').addEventListener('input',e=>applyMaterialProperty('color',e.target.value));
+[['roughness','roughness-input'],['metalness','metalness-input'],['opacity','opacity-input']].forEach(([property,id])=>{
+ $('#'+id).addEventListener('input',e=>applyMaterialProperty(property,Number(e.target.value)));
+});
+
 function refreshFields(){if(!selected)return;makeFields('#position-fields',['X','Y','Z'],[selected.position.x,selected.position.y,selected.position.z],'position');makeFields('#rotation-fields',['X','Y','Z'],[THREE.MathUtils.radToDeg(selected.rotation.x),THREE.MathUtils.radToDeg(selected.rotation.y),THREE.MathUtils.radToDeg(selected.rotation.z)],'rotation');makeFields('#scale-fields',['X','Y','Z'],[selected.scale.x,selected.scale.y,selected.scale.z],'scale');$('#scale-state').textContent=uniform?'UNIFORM':'FREE';$('#scale-hint').textContent=uniform?'Uniform mode: changing one axis updates all three axes.':'Scale each axis independently. Enable uniform scaling to resize proportionally.'}
 function setMode(m){transform.setMode(m);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===m))}
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
