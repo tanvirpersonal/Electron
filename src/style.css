@@ -177,3 +177,16 @@ button,input{touch-action:manipulation}
  .scene-subheading{padding:6px 8px 2px}
  .left-panel .object-list{max-height:140px;overflow-y:auto;display:block;height:auto}
 }
+
+/* Scene home / exit navigation */
+.home-screen{display:none;min-height:100dvh;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 35%,#211934 0%,#0b0c11 58%)}
+body.home-view #app{display:none}
+body.home-view #home-screen{display:grid}
+.home-card{width:min(440px,100%);padding:34px;border:1px solid #30283f;border-radius:18px;background:linear-gradient(145deg,#15151e,#101116);box-shadow:0 24px 80px #0008;text-align:center}
+.home-mark{width:48px;height:48px;margin:0 auto 18px;font-size:29px;border-radius:13px}
+.home-eyebrow{font:9px 'DM Mono';letter-spacing:2px;color:#a78bfa}
+.home-card h1{margin:10px 0;font-size:26px;letter-spacing:-.8px}
+.home-copy{max-width:310px;margin:0 auto 24px;color:#9699a7;font-size:12px;line-height:1.7}
+.home-primary,.home-secondary{width:100%;padding:12px;margin-top:8px;border-radius:8px;font-size:11px}
+.home-secondary{border:1px solid #343644}
+@media(max-width:520px){.home-card{padding:26px 20px}.home-card h1{font-size:22px}}
