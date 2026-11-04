@@ -94,6 +94,22 @@
   <input id="file-input" type="file" accept="*/*" hidden>
  </header>
 
+ <div class="viewport-shading glass" role="group" aria-label="Viewport shading">
+  <div class="shading-modes">
+   <button class="shade-btn active" data-shading="solid" aria-pressed="true" title="Solid shading">Solid</button>
+   <button class="shade-btn" data-shading="material" aria-pressed="false" title="Material preview">Material</button>
+   <button class="shade-btn" data-shading="wireframe" aria-pressed="false" title="Wireframe">Wire</button>
+   <button class="shade-btn" data-shading="rendered" aria-pressed="false" title="Rendered preview">Render</button>
+  </div>
+  <span id="shading-status">SOLID</span>
+  <button id="flat-shading-btn" class="shade-extra" aria-pressed="false" title="Toggle flat shading">Flat</button>
+  <select id="studio-preset" class="studio-select" aria-label="Studio lighting" hidden>
+   <option value="studio">Studio</option><option value="warm">Warm</option><option value="cool">Cool</option><option value="dramatic">Dramatic</option>
+  </select>
+  <div class="studio-presets" role="group" aria-label="Studio lighting presets">
+   <button class="shade-extra active" data-studio="studio">Studio</button><button class="shade-extra" data-studio="warm">Warm</button><button class="shade-extra" data-studio="cool">Cool</button><button class="shade-extra" data-studio="dramatic">Dramatic</button>
+  </div>
+ </div>
  <nav class="rail glass" aria-label="Tools">
   <button id="multi-select-btn" class="ibtn" aria-label="Multi-select" title="Multi-select"><svg class="ic"><use href="#i-select"/></svg></button>
   <span class="hsep"></span>
