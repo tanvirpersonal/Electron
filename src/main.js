@@ -181,16 +181,17 @@ function alignSelection(axis,edge){
  reference.updateWorldMatrix(true,false);
  const refBox=new THREE.Box3().setFromObject(reference);
  const refValue=edge==='min'?refBox.min[axis]:edge==='max'?refBox.max[axis]:refBox.getCenter(new THREE.Vector3())[axis];
- const changes=[];const before=targets.map(object=>({object,position:object.position.clone()}));
+ const snapshot={objects:objects.map(cloneForHistory),selection:selectedObjects.map(object=>objects.indexOf(object)).filter(index=>index>=0),activeIndex:selected?objects.indexOf(selected):-1,nextId};
+ let changed=0;
  targets.forEach(object=>{
   if(object===reference)return;
   object.updateWorldMatrix(true,false);
   const box=new THREE.Box3().setFromObject(object);
   const current=edge==='min'?box.min[axis]:edge==='max'?box.max[axis]:box.getCenter(new THREE.Vector3())[axis];
   const delta=refValue-current;
-  if(Math.abs(delta)>1e-7){changes.push(object);object.position[axis]+=delta}
+  if(Math.abs(delta)>1e-7){object.position[axis]+=delta;changed++}
  });
- if(changes.length){undoStack.push({objects:objects.map(cloneForHistory),selection:selectedObjects.map(object=>objects.indexOf(object)).filter(index=>index>=0),activeIndex:selected?objects.indexOf(selected):-1,nextId});if(undoStack.length>HISTORY_LIMIT)undoStack.shift();redoStack.length=0;syncHistoryButtons();}
+ if(changed){undoStack.push(snapshot);if(undoStack.length>HISTORY_LIMIT)undoStack.shift();redoStack.length=0;syncHistoryButtons();}
  refreshFields();renderList();toast('Aligned '+targets.length+' objects to '+reference.name);
 }
 function distributeSelection(axis){
