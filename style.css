@@ -341,3 +341,6 @@ body.home-view #home-screen{display:grid}
 
 /* Object hierarchy tools */
 .hierarchy-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.hierarchy-actions .btn{min-width:0;min-height:38px;padding:0 7px;font-size:10px}
+
+/* Camera view presets */
+.camera-presets{display:flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--line,rgba(255,255,255,.1));border-radius:10px;background:rgba(255,255,255,.035)}.camera-presets .camera-view{width:29px;min-width:29px;height:29px;padding:0;font-size:10px;font-weight:700;letter-spacing:-.3px}.camera-presets .camera-view:active{background:rgba(220,70,85,.2)}#frame-all{font-size:18px;font-weight:700}
