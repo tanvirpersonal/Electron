@@ -14,7 +14,15 @@ const key=new THREE.DirectionalLight(0xffffff,3);key.position.set(5,9,6);key.cas
 const fill=new THREE.DirectionalLight(0x8a72ff,1.2);fill.position.set(-6,3,-4);scene.add(fill);
 const grid=new THREE.GridHelper(20,40,0x49415e,0x242630);scene.add(grid);
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.ShadowMaterial({opacity:.18}));floor.rotation.x=-Math.PI/2;floor.position.y=-.012;floor.receiveShadow=true;scene.add(floor);
-const transform=new TransformControls(camera,renderer.domElement);scene.add(transform.getHelper());transform.addEventListener('dragging-changed',e=>{orbit.enabled=!e.value;if(e.value)recordHistory()});transform.addEventListener('objectChange',refreshFields);
+const transform=new TransformControls(camera,renderer.domElement);scene.add(transform.getHelper());let snapSettings={translation:false,rotation:false,scale:false,grid:.25,angle:15,step:.1};
+function applySnapSettings(){
+ transform.setTranslationSnap(snapSettings.translation?snapSettings.grid:null);
+ transform.setRotationSnap(snapSettings.rotation?THREE.MathUtils.degToRad(snapSettings.angle):null);
+ transform.setScaleSnap(snapSettings.scale?snapSettings.step:null);
+ ['translation','rotation','scale'].forEach(key=>{const button=$('#snap-'+key);if(button)button.setAttribute('aria-pressed',String(snapSettings[key]))});
+}
+transform.addEventListener('dragging-changed',e=>{orbit.enabled=!e.value;if(e.value)recordHistory()});
+transform.addEventListener('objectChange',refreshFields);
 let objects=[],selected=null,selectedObjects=[],multiSelect=false,uniform=false,mirror=false,nextId=1;
 let touchDrag=null,longPressTimer=null,contextTarget=null;
 const raycaster=new THREE.Raycaster(),pointerNdc=new THREE.Vector2();
@@ -219,6 +227,12 @@ $('#material-color').addEventListener('input',e=>applyMaterialProperty('color',e
 function refreshFields(){if(!selected)return;makeFields('#position-fields',['X','Y','Z'],[selected.position.x,selected.position.y,selected.position.z],'position');makeFields('#rotation-fields',['X','Y','Z'],[THREE.MathUtils.radToDeg(selected.rotation.x),THREE.MathUtils.radToDeg(selected.rotation.y),THREE.MathUtils.radToDeg(selected.rotation.z)],'rotation');makeFields('#scale-fields',['X','Y','Z'],[selected.scale.x,selected.scale.y,selected.scale.z],'scale');$('#scale-state').textContent=uniform?'UNIFORM':'FREE';$('#scale-hint').textContent=uniform?'Uniform mode: changing one axis updates all three axes.':'Scale each axis independently. Enable uniform scaling to resize proportionally.'}
 function setMode(m){transform.setMode(m);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===m))}
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+[['translation','grid-step','grid'],['rotation','angle-step','angle'],['scale','scale-step','step']].forEach(([kind,inputId,setting])=>{
+ const button=$('#snap-'+kind),input=$('#'+inputId);
+ button?.addEventListener('click',()=>{snapSettings[kind]=!snapSettings[kind];applySnapSettings();toast(kind+' snap '+(snapSettings[kind]?'on':'off'))});
+ input?.addEventListener('change',()=>{const value=Number(input.value);if(!Number.isFinite(value)||value<=0){input.value=String(snapSettings[setting]);return}snapSettings[setting]=value;applySnapSettings()});
+});
+applySnapSettings();
 $('#uniform-toggle').onclick=()=>{uniform=!uniform;$('#uniform-toggle').setAttribute('aria-pressed',String(uniform));refreshFields()};
 $('#mirror-toggle').onclick=()=>{mirror=!mirror;$('#mirror-toggle').setAttribute('aria-pressed',String(mirror));toast(mirror?'Mirror scaling enabled':'Mirror scaling disabled')};
 const legacyAddButton=$('#add-cube');if(legacyAddButton)legacyAddButton.onclick=()=>addPrimitive($('#shape-select')?.value||'cube');
