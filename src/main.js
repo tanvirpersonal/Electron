@@ -45,8 +45,8 @@ function addPrimitive(type){
  const mesh=new THREE.Mesh(geometry,material);mesh.position.y=offset;addObject(mesh,name);toast(name+' added');
 }
 function addCube(){addPrimitive('cube')}
-function select(o){selected=o;selectedObjects=[o];transform.attach(o);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=o.name;renderList();refreshFields();syncMaterialEditor()}
-function toggleMultiSelection(o){if(!multiSelect){select(o);return}const i=selectedObjects.indexOf(o);if(i>=0){selectedObjects.splice(i,1);if(selected===o)selected=selectedObjects.at(-1)||null}else{selectedObjects.push(o);selected=o}if(selected){transform.attach(selected);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=selected.name;refreshFields()}else{transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false}renderList()}
+function select(o){selected=o;selectedObjects=[o];transform.attach(o);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=o.name;$('#selbar').hidden=false;$('#selbar-label').textContent=o.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);renderList();refreshFields();syncMaterialEditor();}
+function toggleMultiSelection(o){if(!multiSelect){select(o);return}const i=selectedObjects.indexOf(o);if(i>=0){selectedObjects.splice(i,1);if(selected===o)selected=selectedObjects.at(-1)||null}else{selectedObjects.push(o);selected=o}if(selected){transform.attach(selected);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=selected.name;$('#selbar').hidden=false;$('#selbar-label').textContent=selected.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);refreshFields();syncMaterialEditor()}else{transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false)}renderList()}
 $('#multi-select-btn').onclick=()=>{multiSelect=!multiSelect;$('#multi-select-btn').classList.toggle('active',multiSelect);if(!multiSelect&&selectedObjects.length>1)selectedObjects=[selected].filter(Boolean);renderList();syncMaterialEditor();toast(multiSelect?'Multi-select on: tap objects to add':'Multi-select off')};
 function renderList(){const list=$('#object-list');list.innerHTML='';objects.forEach(o=>{const b=document.createElement('button');b.className='object-item'+(selectedObjects.includes(o)?' selected':'');const icon=document.createElement('span');icon.className='cube-icon';icon.textContent='⬡';const label=document.createElement('span');label.textContent=o.name;b.append(icon,label);b.onclick=()=>toggleMultiSelection(o);list.append(b)});$('#object-count').textContent=objects.length+' OBJECT'+(objects.length===1?'':'S')}
 function makeFields(id,axes,values,type){const host=$(id);host.innerHTML='';axes.forEach((axis,i)=>{const label=document.createElement('label');label.className='axis-field';const b=document.createElement('b');b.textContent=axis;b.style.color=['#e28d8d','#8fcf9c','#8da9ed'][i];const input=document.createElement('input');input.type='number';input.step=type==='rotation'?1:.1;input.value=Number(values[i].toFixed(3));input.addEventListener('change',()=>{if(!selected)return;let v=Number(input.value)||0;const target=type==='position'?selected.position:type==='rotation'?selected.rotation:selected.scale;if(type==='rotation')target[axis.toLowerCase()]=THREE.MathUtils.degToRad(v);else if(type==='scale'&&uniform){if(!mirror)v=Math.max(.001,v);selected.scale.setScalar(v)}else{if(type==='scale'&&!mirror)v=Math.max(.001,v);target[axis.toLowerCase()]=v}refreshFields()});label.append(b,input);host.append(label)})}
@@ -101,10 +101,39 @@ document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.data
 $('#uniform-toggle').onclick=()=>{uniform=!uniform;$('#uniform-toggle').setAttribute('aria-pressed',String(uniform));refreshFields()};
 $('#mirror-toggle').onclick=()=>{mirror=!mirror;$('#mirror-toggle').setAttribute('aria-pressed',String(mirror));toast(mirror?'Mirror scaling enabled':'Mirror scaling disabled')};
 const legacyAddButton=$('#add-cube');if(legacyAddButton)legacyAddButton.onclick=()=>addPrimitive($('#shape-select')?.value||'cube');
-document.querySelectorAll('[data-shape]').forEach(button=>button.addEventListener('click',()=>addPrimitive(button.dataset.shape)));
+document.querySelectorAll('[data-shape]').forEach(button=>button.addEventListener('click',()=>{addPrimitive(button.dataset.shape);if(activeTab!=='add')openPanel('add')}));
 
-$('#toggle-left').onclick=()=>{document.querySelector('.workspace').classList.toggle('hide-left');$('#toggle-left').classList.toggle('active',!document.querySelector('.workspace').classList.contains('hide-left'));requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))};
-$('#toggle-right').onclick=()=>{document.querySelector('.workspace').classList.toggle('hide-right');$('#toggle-right').classList.toggle('active',!document.querySelector('.workspace').classList.contains('hide-right'));requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))};
+/* Dock navigation and responsive panel controller */
+let activeTab=null;
+const tabTitles={add:'Add objects',scene:'Scene',transform:'Transform',material:'Material',world:'World',roadmap:'Roadmap'};
+function openPanel(tab){
+ const sheet=$('#sheet');if(!sheet)return;
+ activeTab=tab;
+ document.querySelectorAll('[data-panel]').forEach(panel=>{panel.hidden=panel.dataset.panel!==tab});
+ document.querySelectorAll('#dock [data-tab]').forEach(button=>button.classList.toggle('active',button.dataset.tab===tab));
+ $('#sheet-title').textContent=tabTitles[tab]||tab;
+ sheet.classList.add('open');sheet.dataset.activeTab=tab;
+ if(tab==='transform'&&selected)refreshFields();
+ if(tab==='material'&&selected)syncMaterialEditor();
+ requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false));
+}
+function closePanel(){
+ const sheet=$('#sheet');if(!sheet)return;
+ sheet.classList.remove('open');sheet.dataset.activeTab='';
+ document.querySelectorAll('#dock [data-tab]').forEach(button=>button.classList.remove('active'));
+ activeTab=null;
+ requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false));
+}
+document.querySelectorAll('#dock [data-tab]').forEach(button=>button.addEventListener('click',()=>{const tab=button.dataset.tab;if(activeTab===tab)closePanel();else openPanel(tab)}));
+$('#sheet-close')?.addEventListener('click',closePanel);
+$('#selbar-name')?.addEventListener('click',()=>openPanel('transform'));
+$('#selbar-dup')?.addEventListener('click',()=>$('#duplicate-btn')?.click());
+$('#selbar-del')?.addEventListener('click',()=>$('#delete-btn')?.click());
+$('#import-btn-2')?.addEventListener('click',()=>$('#import-btn')?.click());
+document.querySelectorAll('[data-soon]').forEach(button=>button.addEventListener('click',()=>toast(button.dataset.soon+' is planned for a future update')));
+
+
+
 async function toggleFullscreen(){
  const app=$('#app');
  try{
@@ -121,13 +150,14 @@ function resumeScene(){document.body.classList.remove('home-view');requestAnimat
 $('#home-btn').onclick=showHome;
 $('#resume-scene').onclick=resumeScene;
 $('#home-new-scene').onclick=()=>{$('#new-scene').click();resumeScene()};
+$('#exit-immersive')?.addEventListener('click',toggleFullscreen);
 
 
 $('#duplicate-btn').onclick=()=>{if(!selectedObjects.length)return;const copies=selectedObjects.map(o=>{const c=o.clone(true);c.position.x+=1;return addObject(c,o.name+' copy')});selected=copies.at(-1);selectedObjects=copies;transform.attach(selected);renderList();toast(copies.length+' object(s) duplicated')};
-$('#delete-btn').onclick=()=>{if(!selectedObjects.length)return;const removed=[...selectedObjects];removed.forEach(o=>scene.remove(o));objects=objects.filter(o=>!removed.includes(o));selectedObjects=[];selected=null;transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false;renderList();toast(removed.length+' object(s) deleted')};
+$('#delete-btn').onclick=()=>{if(!selectedObjects.length)return;const removed=[...selectedObjects];removed.forEach(o=>scene.remove(o));objects=objects.filter(o=>!removed.includes(o));selectedObjects=[];selected=null;transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast(removed.length+' object(s) deleted')};
 $('#focus-btn').onclick=()=>{if(!selected)return;const box=new THREE.Box3().setFromObject(selected),center=box.getCenter(new THREE.Vector3());orbit.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(4,3,5))};
 $('#grid-btn').onclick=()=>{grid.visible=!grid.visible;$('#grid-btn').classList.toggle('active',grid.visible)};
-$('#new-scene').onclick=()=>{transform.detach();objects.forEach(o=>scene.remove(o));objects=[];selected=null;selectedObjects=[];$('#properties').hidden=true;$('#empty-state').hidden=false;renderList();toast('New empty scene')};
+$('#new-scene').onclick=()=>{transform.detach();objects.forEach(o=>scene.remove(o));objects=[];selected=null;selectedObjects=[];$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast('New empty scene')};
 $('#import-btn').onclick=()=>$('#file-input').click();
 $('#file-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const url=URL.createObjectURL(f);try{let obj;if(f.name.toLowerCase().endsWith('.obj'))obj=new OBJLoader().parse(await f.text());else obj=(await new GLTFLoader().loadAsync(url)).scene;addObject(obj,f.name.replace(/\.[^.]+$/,''));toast('Imported '+f.name)}catch(err){console.error(err);toast('Could not import file')}finally{URL.revokeObjectURL(url);e.target.value=''}};
 $('#export-btn').onclick=()=>{const out=new THREE.Scene();objects.forEach(o=>out.add(o.clone(true)));new GLTFExporter().parse(out,async result=>{const blob=new Blob([result],{type:'model/gltf-binary'});const data=await blob.arrayBuffer();if(window.electronAPI?.saveFile){const saved=await window.electronAPI.saveFile({data:Array.from(new Uint8Array(data)),defaultName:'electron-scene.glb'});if(!saved.canceled)toast('GLB exported successfully')}else if(navigator.canShare?.({files:[new File([blob],'electron-scene.glb',{type:'model/gltf-binary'})]})){const file=new File([blob],'electron-scene.glb',{type:'model/gltf-binary'});await navigator.share({files:[file],title:'Export 3D model'});toast('GLB shared successfully')}else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='electron-scene.glb';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);toast('GLB downloaded')}},err=>{console.error(err);toast('Export failed')},{binary:true})};
@@ -161,6 +191,6 @@ window.addEventListener('pointermove',e=>{
 window.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchDrag){clearTimeout(longPressTimer);touchDrag=null;orbit.enabled=true}});
 window.addEventListener('pointercancel',()=>{clearTimeout(longPressTimer);touchDrag=null;orbit.enabled=true});
 
-window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;const k=e.key.toLowerCase();if(k==='w')setMode('translate');if(k==='e')setMode('rotate');if(k==='r')setMode('scale');if(e.key==='Delete')$('#delete-btn').click();if(e.key==='f')toggleFullscreen();if(e.key==='1')$('#toggle-left').click();if(e.key==='2')$('#toggle-right').click()});
+window.addEventListener('keydown',e=>{if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;const k=e.key.toLowerCase();if(k==='w')setMode('translate');if(k==='e')setMode('rotate');if(k==='r')setMode('scale');if(e.key==='Delete')$('#selbar-del').click();if(e.key==='f')toggleFullscreen();if(e.key==='Escape')closePanel()});
 new ResizeObserver(()=>{const w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}).observe(viewport);
 function animate(){requestAnimationFrame(animate);orbit.update();renderer.render(scene,camera)}animate();addCube();
