@@ -4,10 +4,58 @@ import {TransformControls} from 'three/addons/controls/TransformControls.js';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {GLTFExporter} from 'three/addons/exporters/GLTFExporter.js';
 import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 const $=s=>document.querySelector(s), viewport=$('#viewport');
 const scene=new THREE.Scene();scene.background=new THREE.Color('#0b0c11');
 const camera=new THREE.PerspectiveCamera(45,1,.1,1000);camera.position.set(7,6,8);
-const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.outputColorSpace=THREE.SRGBColorSpace;viewport.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+const devicePixelRatioCap=()=>Math.min(window.devicePixelRatio||1,window.innerWidth<700?1.5:2);
+renderer.setPixelRatio(devicePixelRatioCap());renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
+renderer.domElement.style.touchAction='none';viewport.appendChild(renderer.domElement);
+let viewportShading='solid',flatShading=false,studioPreset='studio',environmentTarget=null;
+const originalWireframe=new WeakMap();
+function setWireframe(enabled){
+ objects.forEach(root=>root.traverse(node=>{if(!node.isMesh)return;const materials=Array.isArray(node.material)?node.material:[node.material];materials.forEach(material=>{if(!material||!('wireframe'in material))return;if(enabled){if(!originalWireframe.has(material))originalWireframe.set(material,material.wireframe);material.wireframe=true;}else if(originalWireframe.has(material)){material.wireframe=originalWireframe.get(material);originalWireframe.delete(material);}material.needsUpdate=true;});}));
+}
+function setFlatShading(enabled){
+ flatShading=enabled;
+ objects.forEach(root=>root.traverse(node=>{if(!node.isMesh)return;const materials=Array.isArray(node.material)?node.material:[node.material];materials.forEach(material=>{if(material&&'flatShading'in material){material.flatShading=enabled;material.needsUpdate=true;}});}));
+ $('#flat-shading-btn')?.classList.toggle('active',enabled);
+}
+function ensureStudioEnvironment(){
+ if(environmentTarget)return;
+ const generator=new THREE.PMREMGenerator(renderer);generator.compileEquirectangularShader();
+ const room=new RoomEnvironment();environmentTarget=generator.fromScene(room,.04);scene.environment=environmentTarget.texture;
+ room.dispose();generator.dispose();
+}
+function setStudioPreset(preset){
+ studioPreset=preset;
+ const presets={
+  studio:{background:0x0b0c11,hemi:2.0,key:3.0,fill:1.2,exposure:1.08,shadow:1024},
+  warm:{background:0x17110d,hemi:1.7,key:3.2,fill:.8,exposure:1.12,shadow:1024},
+  cool:{background:0x0a111b,hemi:2.1,key:2.6,fill:1.6,exposure:1.05,shadow:1024},
+  dramatic:{background:0x08080c,hemi:1.0,key:4.0,fill:.35,exposure:1.18,shadow:2048}
+ };
+ const p=presets[preset]||presets.studio;scene.background.setHex(p.background);
+ scene.children.forEach(light=>{if(light.isHemisphereLight)light.intensity=p.hemi;else if(light.isDirectionalLight){if(light===key)light.intensity=p.key;else if(light===fill)light.intensity=p.fill;}});
+ renderer.toneMappingExposure=p.exposure;key.shadow.mapSize.set(p.shadow,p.shadow);key.shadow.needsUpdate=true;
+ document.querySelectorAll('[data-studio]').forEach(button=>button.classList.toggle('active',button.dataset.studio===preset));
+}
+function setViewportShading(mode){
+ if(!['solid','material','wireframe','rendered'].includes(mode))return;
+ viewportShading=mode;
+ setWireframe(mode==='wireframe');
+ const preview=mode==='material'||mode==='rendered';
+ if(preview)ensureStudioEnvironment();
+ scene.environment=preview&&environmentTarget?environmentTarget.texture:null;
+ renderer.toneMapping=mode==='solid'||mode==='wireframe'?THREE.NoToneMapping:THREE.ACESFilmicToneMapping;
+ renderer.toneMappingExposure=mode==='rendered'?1.18:1.08;
+ key.castShadow=mode!=='wireframe';renderer.shadowMap.enabled=mode!=='wireframe';
+ document.querySelectorAll('[data-shading]').forEach(button=>{button.classList.toggle('active',button.dataset.shading===mode);button.setAttribute('aria-pressed',String(button.dataset.shading===mode));});
+ const hint={solid:'Solid viewport',material:'Material preview',wireframe:'Wireframe viewport',rendered:'Rendered preview'}[$('#shading-status')?.textContent=mode]||'';
+ const status=$('#shading-status');if(status)status.textContent=({solid:'SOLID',material:'MATERIAL',wireframe:'WIREFRAME',rendered:'RENDERED'})[mode];
+}
 const orbit=new OrbitControls(camera,renderer.domElement);orbit.enableDamping=true;orbit.target.set(0,.8,0);
 scene.add(new THREE.HemisphereLight(0xbac8ff,0x28202e,2));
 const key=new THREE.DirectionalLight(0xffffff,3);key.position.set(5,9,6);key.castShadow=true;scene.add(key);
@@ -477,6 +525,9 @@ $('#duplicate-btn').onclick=()=>{if(!selectedObjects.length)return;if(pivotEditM
 $('#delete-btn').onclick=()=>{if(!selectedObjects.length)return;if(pivotEditMode)setPivotEditMode(false,false);recordHistory();const removed=[...selectedObjects];removed.forEach(o=>scene.remove(o));objects=objects.filter(o=>!removed.includes(o));selectedObjects=[];selected=null;transform.detach();pivotHandle.visible=false;$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast(removed.length+' object(s) deleted')};
 $('#focus-btn').onclick=()=>{if(!selected)return;const box=new THREE.Box3().setFromObject(selected),center=box.getCenter(new THREE.Vector3());orbit.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(4,3,5))};
 $('#grid-btn').onclick=()=>{if(isoViewActive){gridVisibilityBeforeIso=!gridVisibilityBeforeIso;grid.visible=false;toast(gridVisibilityBeforeIso?'Grid will show when Isometric is off':'Grid will stay hidden when Isometric is off');}else{grid.visible=!grid.visible;$('#grid-btn').classList.toggle('active',grid.visible)}};
+document.querySelectorAll('[data-shading]').forEach(button=>button.addEventListener('click',()=>setViewportShading(button.dataset.shading)));
+$('#flat-shading-btn')?.addEventListener('click',()=>setFlatShading(!flatShading));
+document.querySelectorAll('[data-studio]').forEach(button=>button.addEventListener('click',()=>setStudioPreset(button.dataset.studio)));
 $('#new-scene').onclick=()=>{if(pivotEditMode)setPivotEditMode(false,false);recordHistory();transform.detach();pivotHandle.visible=false;objects.forEach(o=>scene.remove(o));objects=[];selected=null;selectedObjects=[];$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast('New empty scene')};
 $('#import-btn').onclick=()=>$('#file-input').click();
 $('#file-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const url=URL.createObjectURL(f);try{let obj;if(f.name.toLowerCase().endsWith('.obj'))obj=new OBJLoader().parse(await f.text());else obj=(await new GLTFLoader().loadAsync(url)).scene;addObject(obj,f.name.replace(/\.[^.]+$/,''));toast('Imported '+f.name)}catch(err){console.error(err);toast('Could not import file')}finally{URL.revokeObjectURL(url);e.target.value=''}};
@@ -529,4 +580,4 @@ window.addEventListener('keydown',e=>{
  if(e.key==='Escape')closePanel();
 });
 new ResizeObserver(()=>{const w=viewport.clientWidth,h=viewport.clientHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}).observe(viewport);
-function animate(){requestAnimationFrame(animate);orbit.update();renderer.render(scene,camera)}animate();addCube();clearHistory();
+function animate(){requestAnimationFrame(animate);orbit.update();renderer.render(scene,camera)}animate();addCube();clearHistory();setViewportShading('solid');setStudioPreset('studio');
