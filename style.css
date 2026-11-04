@@ -618,3 +618,10 @@ body.home-view #home-screen{display:grid}
   #app:not(.immersive) .rail{top:66px;transform:none;display:grid;grid-template-columns:repeat(2,30px);justify-items:center;gap:2px}
   #app:not(.immersive) .rail .hsep{display:none}
 }
+
+/* Narrow landscape phones: the shading panel starts right where the labelled Export button ends
+   and covered it. Show Export as an icon (portrait already does) so the two no longer overlap. */
+@media (orientation:landscape) and (max-width:700px){
+  .topbar .btn-primary .lbl{display:none}
+  .topbar .btn-primary{padding:0 8px}
+}
