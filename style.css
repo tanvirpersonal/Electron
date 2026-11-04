@@ -280,3 +280,21 @@ body.home-view #home-screen{display:grid}
   .sheet{width:370px}
   .shape-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
 }
+
+
+/* Landscape selection actions: keep the object bar clear of the centered dock. */
+@media (orientation:landscape) and (min-width:600px){
+  .selbar{
+    top:auto;
+    left:auto;
+    right:calc(var(--safe-right) + 18px);
+    bottom:calc(var(--safe-bottom) + 66px);
+    transform:none;
+  }
+}
+@media (orientation:landscape) and (max-height:430px){
+  .selbar{
+    right:calc(var(--safe-right) + 12px);
+    bottom:calc(var(--safe-bottom) + 58px);
+  }
+}
