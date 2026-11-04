@@ -141,8 +141,8 @@ function renderList(){
   const actions=document.createElement('div');actions.className='object-actions';
   const action=(symbol,title,onClick)=>{const button=document.createElement('button');button.type='button';button.className='object-action';button.textContent=symbol;button.title=title;button.setAttribute('aria-label',title);button.addEventListener('click',e=>{e.stopPropagation();onClick()});actions.append(button)};
   action('✎','Rename '+o.name,()=>{const entered=window.prompt('Rename object',o.name);if(entered===null)return;const name=entered.trim().replace(/\s+/g,' ').slice(0,48);if(!name||name===o.name)return;recordHistory();o.name=name;if(selected===o){$('#selected-name').textContent=name;$('#selbar-label').textContent=name}renderList();toast('Object renamed')});
-  action(o.visible?'◉':'⊘',o.visible?'Hide object':'Show object',()=>{recordHistory();o.visible=!o.visible;if(selected===o)attachCurrentSelection()renderList();toast(o.visible?'Object shown':'Object hidden')});
-  action(o.userData.editorLocked?'▣':'⌑',o.userData.editorLocked?'Unlock object':'Lock object',()=>{recordHistory();o.userData.editorLocked=!o.userData.editorLocked;if(selected===o)attachCurrentSelection()renderList();toast(o.userData.editorLocked?'Object locked':'Object unlocked')});
+  action(o.visible?'◉':'⊘',o.visible?'Hide object':'Show object',()=>{recordHistory();o.visible=!o.visible;if(selected===o)attachCurrentSelection();renderList();toast(o.visible?'Object shown':'Object hidden')});
+  action(o.userData.editorLocked?'▣':'⌑',o.userData.editorLocked?'Unlock object':'Lock object',()=>{recordHistory();o.userData.editorLocked=!o.userData.editorLocked;if(selected===o)attachCurrentSelection();renderList();toast(o.userData.editorLocked?'Object locked':'Object unlocked')});
   row.append(selectButton,actions);list.append(row);
   o.children.filter(child=>child.userData?.editorHierarchyNode).forEach(child=>makeRow(child,depth+1));
  };
