@@ -180,9 +180,14 @@
        <button id="delete-btn" class="btn danger"><svg class="ic"><use href="#i-trash"/></svg>Delete</button>
       </div>
      </div>
-     <div class="group"><h3>Coming soon</h3>
-      <button class="soon-row" data-soon="Snapping"><svg class="ic"><use href="#i-magnet"/></svg><div><strong>Snapping</strong><small>Grid, angle and scale steps</small></div><span class="chip">SOON</span></button>
-      <button class="soon-row" data-soon="Align tools"><svg class="ic"><use href="#i-align"/></svg><div><strong>Align &amp; distribute</strong><small>Line up multiple objects</small></div><span class="chip">SOON</span></button>
+     <div class="group snap-group"><h3>Precision snapping <small>TRANSFORM GIZMO</small></h3>
+      <div class="snap-row"><div><strong>Position grid</strong><small>Snap movement to units</small></div><button id="snap-translation" class="switch" aria-pressed="false" aria-label="Position grid snapping"></button></div>
+      <label class="snap-value"><span>Grid size</span><input id="grid-step" type="number" min="0.01" max="100" step="0.05" value="0.25"></label>
+      <div class="snap-row"><div><strong>Rotation angle</strong><small>Snap rotation in degrees</small></div><button id="snap-rotation" class="switch" aria-pressed="false" aria-label="Rotation snapping"></button></div>
+      <label class="snap-value"><span>Angle step</span><select id="angle-step"><option value="5">5°</option><option value="10">10°</option><option value="15" selected>15°</option><option value="30">30°</option><option value="45">45°</option><option value="90">90°</option></select></label>
+      <div class="snap-row"><div><strong>Scale increments</strong><small>Snap scale changes</small></div><button id="snap-scale" class="switch" aria-pressed="false" aria-label="Scale snapping"></button></div>
+      <label class="snap-value"><span>Scale step</span><select id="scale-step"><option value="0.01">0.01</option><option value="0.05">0.05</option><option value="0.1" selected>0.1</option><option value="0.25">0.25</option><option value="0.5">0.5</option><option value="1">1.0</option></select></label>
+      <p class="hint">Snapping applies while dragging the Move, Rotate and Scale gizmos. Toggle each mode independently.</p>
      </div>
     </div>
    </section>
