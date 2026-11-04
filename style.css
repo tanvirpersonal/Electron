@@ -328,3 +328,13 @@ body.home-view #home-screen{display:grid}
 .snap-value{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;padding-left:2px;color:#a9a5b5;font-size:9px}
 .snap-value input,.snap-value select{width:82px;height:29px;padding:0 7px;border:1px solid var(--line-strong);border-radius:7px;background:#191923;color:#efedf5;font:10px ui-monospace,SFMono-Regular,monospace}
 .snap-value input:focus,.snap-value select:focus{outline:1px solid #9b6ce2}
+
+/* Align & distribute controls */
+.align-group{padding:11px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.018)}
+.align-axis{display:grid;grid-template-columns:42px minmax(0,1fr);align-items:center;gap:7px;margin-top:10px}
+.align-axis>strong{color:#c9c5d4;font-size:10px;font-weight:850}
+.align-buttons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.align-buttons .btn,.distribute-btn{min-width:0;min-height:32px;padding:0 5px;font-size:9px}
+.distribute-btn{grid-column:2;justify-self:stretch}
+.align-group .btn:disabled{opacity:.3;cursor:not-allowed;filter:saturate(.3)}
+.align-group .hint{margin-top:9px}
