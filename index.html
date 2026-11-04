@@ -80,6 +80,13 @@
   <div class="spacer"></div>
   <button id="undo-btn" class="ibtn" aria-label="Undo" title="Undo (Ctrl+Z)" disabled><svg class="ic"><use href="#i-undo"/></svg></button>
   <button id="redo-btn" class="ibtn" aria-label="Redo" title="Redo (Ctrl+Y)" disabled><svg class="ic"><use href="#i-redo"/></svg></button>
+  <div class="camera-presets topbar-camera" role="group" aria-label="Camera views">
+   <button class="ibtn camera-view" data-camera-view="top" title="Top view" aria-label="Top view">T</button>
+   <button class="ibtn camera-view" data-camera-view="front" title="Front view" aria-label="Front view">F</button>
+   <button class="ibtn camera-view" data-camera-view="left" title="Left view" aria-label="Left view">L</button>
+   <button class="ibtn camera-view" data-camera-view="right" title="Right view" aria-label="Right view">R</button>
+   <button class="ibtn camera-view" data-camera-view="iso" title="Isometric view" aria-label="Isometric view">3D</button>
+  </div>
   <span class="vsep"></span>
   <button id="import-btn" class="ibtn" aria-label="Import model" title="Import GLB / glTF / OBJ"><svg class="ic"><use href="#i-import"/></svg></button>
   <button id="export-btn" class="btn-primary" aria-label="Export GLB" title="Export scene as GLB"><svg class="ic"><use href="#i-export"/></svg><span class="lbl">Export</span></button>
@@ -95,13 +102,6 @@
   <button class="ibtn" data-mode="scale" aria-label="Scale" title="Scale (R)"><svg class="ic"><use href="#i-scale"/></svg></button>
   <span class="hsep"></span>
   <button id="focus-btn" class="ibtn" aria-label="Focus selected" title="Focus selected"><svg class="ic"><use href="#i-focus"/></svg></button>
-  <div class="camera-presets" role="group" aria-label="Camera views">
-   <button class="ibtn camera-view" data-camera-view="top" title="Top view" aria-label="Top view">T</button>
-   <button class="ibtn camera-view" data-camera-view="front" title="Front view" aria-label="Front view">F</button>
-   <button class="ibtn camera-view" data-camera-view="left" title="Left view" aria-label="Left view">L</button>
-   <button class="ibtn camera-view" data-camera-view="right" title="Right view" aria-label="Right view">R</button>
-   <button class="ibtn camera-view" data-camera-view="iso" title="Isometric view" aria-label="Isometric view">3D</button>
-  </div>
   <button id="frame-all" class="ibtn" aria-label="Frame all objects" title="Frame all objects">⌗</button>
   <button id="camera-reset" class="ibtn" aria-label="Reset camera" title="Reset camera"><svg class="ic"><use href="#i-reset"/></svg></button>
   <button id="grid-btn" class="ibtn active" aria-label="Toggle grid" title="Toggle grid"><svg class="ic"><use href="#i-grid"/></svg></button>
