@@ -307,6 +307,23 @@ async function toggleFullscreen(){
 }
 $('#fullscreen-btn').onclick=toggleFullscreen;
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement;$('#app').classList.toggle('immersive',active);$('#fullscreen-btn').classList.toggle('active',active);requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))});
+function setCameraView(direction,label='Camera view'){
+ const distance=Math.max(camera.position.distanceTo(orbit.target),6);
+ camera.position.copy(orbit.target).add(direction.clone().normalize().multiplyScalar(distance));
+ camera.up.set(0,1,0);camera.lookAt(orbit.target);orbit.update();toast(label);
+}
+function frameAll(){
+ if(!objects.length){orbit.target.set(0,.8,0);camera.position.set(7,6,8);orbit.update();return}
+ const bounds=new THREE.Box3();objects.forEach(object=>bounds.expandByObject(object));
+ const center=bounds.getCenter(new THREE.Vector3()),sphere=bounds.getBoundingSphere(new THREE.Sphere());
+ const radius=Math.max(sphere.radius,.5),distance=radius/Math.sin(THREE.MathUtils.degToRad(camera.fov/2))*1.2;
+ orbit.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(1,0.8,1).normalize().multiplyScalar(distance));camera.near=Math.max(.01,distance/1000);camera.far=Math.max(1000,distance*20);camera.updateProjectionMatrix();orbit.update();toast('Framed all objects');
+}
+document.querySelectorAll('[data-camera-view]').forEach(button=>button.addEventListener('click',()=>{
+ const views={top:new THREE.Vector3(0,1,0),front:new THREE.Vector3(0,0,1),back:new THREE.Vector3(0,0,-1),left:new THREE.Vector3(-1,0,0),right:new THREE.Vector3(1,0,0),iso:new THREE.Vector3(1,1,1)};
+ const direction=views[button.dataset.cameraView];if(direction)setCameraView(direction,button.title||'Camera view');
+}));
+$('#frame-all')?.addEventListener('click',frameAll);
 $('#camera-reset').onclick=()=>{camera.position.set(7,6,8);orbit.target.set(0,.8,0);orbit.update();toast('Camera reset')};
 function showHome(){if(document.fullscreenElement)document.exitFullscreen();$('#app').classList.remove('immersive');document.body.classList.add('home-view')}
 function resumeScene(){document.body.classList.remove('home-view');requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))}
