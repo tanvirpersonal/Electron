@@ -56,7 +56,7 @@ jobs:
                   "import com.getcapacitor.BridgeActivity;\nimport android.os.Bundle;\nimport android.view.View;\nimport android.graphics.Color;",
               )
               source = re.sub(
-                  r"public class MainActivity extends BridgeActivity\\s*\\{\\s*\\}",
+                  r"public class MainActivity extends BridgeActivity\s*\{\s*\}",
                   """public class MainActivity extends BridgeActivity {
               private void enableImmersiveMode() {
                   getWindow().setStatusBarColor(Color.TRANSPARENT);
