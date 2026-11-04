@@ -140,7 +140,7 @@ function renderList(){
   };
   action('✎','Rename '+o.name,()=>{
    const entered=window.prompt('Rename object',o.name);if(entered===null)return;
-   const name=entered.trim().replace(/\\s+/g,' ').slice(0,48);if(!name||name===o.name)return;
+   const name=entered.trim().replace(/\s+/g,' ').slice(0,48);if(!name||name===o.name)return;
    recordHistory();o.name=name;
    if(selected===o){$('#selected-name').textContent=name;$('#selbar-label').textContent=name}
    renderList();toast('Object renamed');
@@ -159,7 +159,7 @@ function renderList(){
  });
  $('#object-count').textContent=objects.length+' OBJECT'+(objects.length===1?'':'S');
 }
-function makeFields(id,axes,values,type){const host=$(id);host.innerHTML='';axes.forEach((axis,i)=>{const label=document.createElement('label');label.className='axis-field';const b=document.createElement('b');b.textContent=axis;b.style.color=['#e28d8d','#8fcf9c','#8da9ed'][i];const input=document.createElement('input');input.type='number';input.step=type==='rotation'?1:.1;input.value=Number(values[i].toFixed(3));input.addEventListener('change',()=>{if(!selected)return;recordHistory();let v=Number(input.value)||0;const target=type==='position'?selected.position:type==='rotation'?selected.rotation:selected.scale;if(type==='rotation')target[axis.toLowerCase()]=THREE.MathUtils.degToRad(v);else if(type==='scale'&&uniform){if(!mirror)v=Math.max(.001,v);selected.scale.setScalar(v)}else{if(type==='scale'&&!mirror)v=Math.max(.001,v);target[axis.toLowerCase()]=v}refreshFields()});label.append(b,input);host.append(label)})}
+function makeFields(id,axes,values,type){const host=$(id);host.innerHTML='';axes.forEach((axis,i)=>{const label=document.createElement('label');label.className='axis-field';const b=document.createElement('b');b.textContent=axis;b.style.color=['#e28d8d','#8fcf9c','#8da9ed'][i];const input=document.createElement('input');input.type='number';input.step=type==='rotation'?1:.1;input.value=Number(values[i].toFixed(3));input.addEventListener('change',()=>{if(!selected||selected.userData.editorLocked)return;recordHistory();let v=Number(input.value)||0;const target=type==='position'?selected.position:type==='rotation'?selected.rotation:selected.scale;if(type==='rotation')target[axis.toLowerCase()]=THREE.MathUtils.degToRad(v);else if(type==='scale'&&uniform){if(!mirror)v=Math.max(.001,v);selected.scale.setScalar(v)}else{if(type==='scale'&&!mirror)v=Math.max(.001,v);target[axis.toLowerCase()]=v}refreshFields()});label.append(b,input);host.append(label)})}
 
 function getSelectedMeshes(){
  const roots=selectedObjects.length?selectedObjects:(selected?[selected]:[]);
