@@ -16,7 +16,7 @@ renderer.domElement.style.touchAction='none';viewport.appendChild(renderer.domEl
 let viewportShading='solid',flatShading=false,studioPreset='studio',environmentTarget=null;
 const originalWireframe=new WeakMap();
 function setWireframe(enabled){
- objects.forEach(root=>root.traverse(node=>{if(!node.isMesh)return;const materials=Array.isArray(node.material)?node.material:[node.material];materials.forEach(material=>{if(!material||!('wireframe'in material))return;if(enabled){if(!originalWireframe.has(material))originalWireframe.set(material,material.wireframe);material.wireframe=true;}else if(originalWireframe.has(material)){material.wireframe=originalWireframe.get(material);originalWireframe.delete(material);}material.needsUpdate=true;});}));
+ objects.forEach(root=>root.traverse(node=>{if(!node.isMesh)return;const materials=Array.isArray(node.material)?node.material:[node.material];materials.forEach(material=>{if(!material||!('wireframe'in material))return;if(enabled){if(!Object.prototype.hasOwnProperty.call(material.userData,'editorOriginalWireframe'))material.userData.editorOriginalWireframe=material.wireframe;material.wireframe=true;}else if(Object.prototype.hasOwnProperty.call(material.userData,'editorOriginalWireframe')){material.wireframe=material.userData.editorOriginalWireframe;delete material.userData.editorOriginalWireframe;}material.needsUpdate=true;});}));
 }
 function setFlatShading(enabled){
  flatShading=enabled;
@@ -158,7 +158,7 @@ function clearHistory(){undoStack.length=0;redoStack.length=0;syncHistoryButtons
 $('#undo-btn')?.addEventListener('click',undo);
 $('#redo-btn')?.addEventListener('click',redo);
 function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),2200)}
-function addObject(obj,name,withHistory=true){if(withHistory)recordHistory();obj.name=name+' '+nextId++;obj.traverse?.(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});scene.add(obj);objects.push(obj);select(obj);renderList();return obj}
+function addObject(obj,name,withHistory=true){if(withHistory)recordHistory();obj.name=name+' '+nextId++;obj.traverse?.(m=>{if(m.isMesh){m.castShadow=true;m.receiveShadow=true}});scene.add(obj);objects.push(obj);if(viewportShading==='wireframe')setWireframe(true);select(obj);renderList();return obj}
 function makeMaterial(){return new THREE.MeshStandardMaterial({color:0x9b83e6,roughness:.55,metalness:.12})}
 function addPrimitive(type){
  const material=makeMaterial();let geometry,name,offset=0;
