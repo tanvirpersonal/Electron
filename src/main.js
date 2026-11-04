@@ -22,7 +22,7 @@ function applySnapSettings(){
  ['translation','rotation','scale'].forEach(key=>{const button=$('#snap-'+key);if(button)button.setAttribute('aria-pressed',String(snapSettings[key]))});
 }
 transform.addEventListener('dragging-changed',e=>{orbit.enabled=!e.value;if(e.value)recordHistory()});
-transform.addEventListener('objectChange',refreshFields);
+transform.addEventListener('objectChange',handleTransformObjectChange);
 let objects=[],selected=null,selectedObjects=[],multiSelect=false,uniform=false,mirror=false,nextId=1;
 let touchDrag=null,longPressTimer=null,contextTarget=null;
 const raycaster=new THREE.Raycaster(),pointerNdc=new THREE.Vector2();
@@ -64,7 +64,7 @@ function restoreHistorySnapshot(snapshot){
   selected=resolveObjectPath(objects,snapshot.activePath)||(selectedObjects.at(-1)||null);
   if(selected){
    if(!selectedObjects.includes(selected))selectedObjects.push(selected);
-   if(selected.visible&&!selected.userData.editorLocked)transform.attach(selected);else transform.detach();
+   attachCurrentSelection();
    $('#empty-state').hidden=true;
    $('#properties').hidden=false;
    $('#selected-name').textContent=selected.name;
@@ -74,7 +74,7 @@ function restoreHistorySnapshot(snapshot){
    document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);
    refreshFields();syncMaterialEditor();
   }else{
-   transform.detach();
+   transform.detach();pivotHandle.visible=false;
    $('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;
    document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);
    document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);
@@ -126,8 +126,8 @@ function addPrimitive(type){
  const mesh=new THREE.Mesh(geometry,material);mesh.position.y=offset;addObject(mesh,name);toast(name+' added');
 }
 function addCube(){addPrimitive('cube')}
-function select(o){selected=o;selectedObjects=[o];if(o.visible&&!o.userData.editorLocked)transform.attach(o);else transform.detach();$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=o.name;$('#selbar').hidden=false;$('#selbar-label').textContent=o.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);renderList();refreshFields();syncMaterialEditor();}
-function toggleMultiSelection(o){if(!multiSelect){select(o);return}const i=selectedObjects.indexOf(o);if(i>=0){selectedObjects.splice(i,1);if(selected===o)selected=selectedObjects.at(-1)||null}else{selectedObjects.push(o);selected=o}if(selected){if(selected.visible&&!selected.userData.editorLocked)transform.attach(selected);else transform.detach();$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=selected.name;$('#selbar').hidden=false;$('#selbar-label').textContent=selected.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);refreshFields();syncMaterialEditor()}else{transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false)}renderList()}
+function select(o){selected=o;selectedObjects=[o];attachCurrentSelection();$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=o.name;$('#selbar').hidden=false;$('#selbar-label').textContent=o.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);renderList();refreshFields();syncMaterialEditor();}
+function toggleMultiSelection(o){if(!multiSelect){select(o);return}const i=selectedObjects.indexOf(o);if(i>=0){selectedObjects.splice(i,1);if(selected===o)selected=selectedObjects.at(-1)||null}else{selectedObjects.push(o);selected=o}if(selected){attachCurrentSelection();$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=selected.name;$('#selbar').hidden=false;$('#selbar-label').textContent=selected.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);refreshFields();syncMaterialEditor()}else{transform.detach();pivotHandle.visible=false;$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false)}renderList()}
 $('#multi-select-btn').onclick=()=>{multiSelect=!multiSelect;$('#multi-select-btn').classList.toggle('active',multiSelect);if(!multiSelect&&selectedObjects.length>1)selectedObjects=[selected].filter(Boolean);renderList();syncMaterialEditor();toast(multiSelect?'Multi-select on: tap objects to add':'Multi-select off')};
 function renderList(){
  const list=$('#object-list');list.innerHTML='';
@@ -141,8 +141,8 @@ function renderList(){
   const actions=document.createElement('div');actions.className='object-actions';
   const action=(symbol,title,onClick)=>{const button=document.createElement('button');button.type='button';button.className='object-action';button.textContent=symbol;button.title=title;button.setAttribute('aria-label',title);button.addEventListener('click',e=>{e.stopPropagation();onClick()});actions.append(button)};
   action('✎','Rename '+o.name,()=>{const entered=window.prompt('Rename object',o.name);if(entered===null)return;const name=entered.trim().replace(/\s+/g,' ').slice(0,48);if(!name||name===o.name)return;recordHistory();o.name=name;if(selected===o){$('#selected-name').textContent=name;$('#selbar-label').textContent=name}renderList();toast('Object renamed')});
-  action(o.visible?'◉':'⊘',o.visible?'Hide object':'Show object',()=>{recordHistory();o.visible=!o.visible;if(selected===o){if(o.visible&&!o.userData.editorLocked)transform.attach(o);else transform.detach()}renderList();toast(o.visible?'Object shown':'Object hidden')});
-  action(o.userData.editorLocked?'▣':'⌑',o.userData.editorLocked?'Unlock object':'Lock object',()=>{recordHistory();o.userData.editorLocked=!o.userData.editorLocked;if(selected===o){if(o.userData.editorLocked||!o.visible)transform.detach();else transform.attach(o)}renderList();toast(o.userData.editorLocked?'Object locked':'Object unlocked')});
+  action(o.visible?'◉':'⊘',o.visible?'Hide object':'Show object',()=>{recordHistory();o.visible=!o.visible;if(selected===o)attachCurrentSelection()renderList();toast(o.visible?'Object shown':'Object hidden')});
+  action(o.userData.editorLocked?'▣':'⌑',o.userData.editorLocked?'Unlock object':'Lock object',()=>{recordHistory();o.userData.editorLocked=!o.userData.editorLocked;if(selected===o)attachCurrentSelection()renderList();toast(o.userData.editorLocked?'Object locked':'Object unlocked')});
   row.append(selectButton,actions);list.append(row);
   o.children.filter(child=>child.userData?.editorHierarchyNode).forEach(child=>makeRow(child,depth+1));
  };
@@ -152,8 +152,8 @@ function makeFields(id,axes,values,type){const host=$(id);host.innerHTML='';axes
 
 function getRootObject(object){let node=object;while(node.parent&&node.parent!==scene)node=node.parent;return node}
 function groupSelected(){const chosen=[...new Set(selectedObjects.map(getRootObject))].filter(o=>objects.includes(o));if(chosen.length<2){toast('Select at least 2 root objects');return}recordHistory();const group=new THREE.Group();group.name='Group '+nextId++;group.userData.editorHierarchyNode=true;scene.add(group);chosen.forEach(object=>{object.userData.editorHierarchyNode=true;group.attach(object)});objects=objects.filter(object=>!chosen.includes(object));objects.push(group);select(group);toast('Grouped '+chosen.length+' objects')}
-function ungroupSelected(){const groups=selectedObjects.filter(o=>o.isGroup&&o.children.some(child=>child.userData?.editorHierarchyNode));if(!groups.length){toast('Select a group to ungroup');return}recordHistory();const released=[];groups.forEach(group=>{const parent=group.parent;[...group.children].filter(child=>child.userData?.editorHierarchyNode).forEach(child=>{parent.attach(child);released.push(child)});if(parent===scene)objects=objects.filter(o=>o!==group);group.parent?.remove(group)});if(released.length){selectedObjects=released;selected=released.at(-1);transform.attach(selected);$('#selected-name').textContent=selected.name;$('#selbar-label').textContent=selected.name;renderList();refreshFields();syncMaterialEditor();toast('Group separated')}}
-function parentSelected(){const parent=selected;if(!parent||selectedObjects.length<2){toast('Select children first, then the parent last');return}const children=selectedObjects.filter(o=>o!==parent);if(children.some(child=>child===parent||child.getObjectById(parent.id))){toast('Cannot create a parenting cycle');return}const valid=children.filter(child=>objects.includes(getRootObject(child))&&!parent.getObjectById(child.id));if(!valid.length){toast('No valid child objects selected');return}recordHistory();valid.forEach(child=>{const root=getRootObject(child);parent.attach(child);if(root===child)objects=objects.filter(o=>o!==root);child.userData.editorHierarchyNode=true});selectedObjects=[parent];selected=parent;transform.attach(parent);renderList();toast(valid.length+' child object(s) parented')}
+function ungroupSelected(){const groups=selectedObjects.filter(o=>o.isGroup&&o.children.some(child=>child.userData?.editorHierarchyNode));if(!groups.length){toast('Select a group to ungroup');return}recordHistory();const released=[];groups.forEach(group=>{const parent=group.parent;[...group.children].filter(child=>child.userData?.editorHierarchyNode).forEach(child=>{parent.attach(child);released.push(child)});if(parent===scene)objects=objects.filter(o=>o!==group);group.parent?.remove(group)});if(released.length){selectedObjects=released;selected=released.at(-1);attachCurrentSelection();$('#selected-name').textContent=selected.name;$('#selbar-label').textContent=selected.name;renderList();refreshFields();syncMaterialEditor();toast('Group separated')}}
+function parentSelected(){const parent=selected;if(!parent||selectedObjects.length<2){toast('Select children first, then the parent last');return}const children=selectedObjects.filter(o=>o!==parent);if(children.some(child=>child===parent||child.getObjectById(parent.id))){toast('Cannot create a parenting cycle');return}const valid=children.filter(child=>objects.includes(getRootObject(child))&&!parent.getObjectById(child.id));if(!valid.length){toast('No valid child objects selected');return}recordHistory();valid.forEach(child=>{const root=getRootObject(child);parent.attach(child);if(root===child)objects=objects.filter(o=>o!==root);child.userData.editorHierarchyNode=true});selectedObjects=[parent];selected=parent;attachCurrentSelection();renderList();toast(valid.length+' child object(s) parented')}
 $('#group-btn')?.addEventListener('click',groupSelected);$('#ungroup-btn')?.addEventListener('click',ungroupSelected);$('#parent-btn')?.addEventListener('click',parentSelected);
 function selectedEditableObjects(){return selectedObjects.filter(object=>{let root=object;while(root.parent&&root.parent!==scene)root=root.parent;return objects.includes(root)&&!object.userData.editorLocked&&object.visible})}
 function updateAlignControls(){
@@ -252,8 +252,115 @@ $('#material-color').addEventListener('input',e=>applyMaterialProperty('color',e
  $('#'+id).addEventListener('input',e=>applyMaterialProperty(property,Number(e.target.value)));
 });
 
+
+// Pivot/origin editing uses a wrapper so mesh geometry is never modified.
+let pivotEditMode=false,transformMode='translate',savedTransformSpace='world';
+const pivotHandle=new THREE.Group();
+const pivotMarker=new THREE.Mesh(new THREE.SphereGeometry(.065,16,12),new THREE.MeshBasicMaterial({color:0xffc96b,depthTest:false,depthWrite:false}));
+pivotMarker.renderOrder=20;pivotHandle.add(pivotMarker);scene.add(pivotHandle);pivotHandle.visible=false;
+function updatePivotHandle(){
+ if(!selected)return;
+ selected.updateWorldMatrix(true,false);
+ pivotHandle.position.copy(selected.getWorldPosition(new THREE.Vector3()));
+ pivotHandle.quaternion.identity();pivotHandle.scale.set(1,1,1);pivotHandle.updateMatrixWorld(true);
+}
+function attachCurrentSelection(){
+ if(pivotEditMode){
+  if(!selected||selectedObjects.length!==1||selected.userData.editorLocked||!selected.visible){setPivotEditMode(false,false);return}
+  updatePivotHandle();pivotHandle.visible=true;transform.setMode('translate');transform.setSpace('world');transform.attach(pivotHandle);return;
+ }
+ pivotHandle.visible=false;
+ if(selected&&selected.visible&&!selected.userData.editorLocked)transform.attach(selected);else transform.detach();
+ transform.setMode(transformMode);
+}
+function ensurePivotWrapper(object){
+ if(object?.userData?.editorPivotWrapper)return object;
+ if(!object?.parent)return null;
+ const parent=object.parent;
+ parent.updateWorldMatrix(true,false);
+ const wrapper=new THREE.Group();
+ wrapper.name=object.name;
+ wrapper.position.copy(object.position);wrapper.quaternion.copy(object.quaternion);wrapper.scale.copy(object.scale);
+ wrapper.visible=object.visible;wrapper.userData={...object.userData,editorPivotWrapper:true,editorPivotOffset:[0,0,0]};
+ delete object.userData.editorHierarchyNode;
+ object.visible=true;
+ parent.add(wrapper);wrapper.updateMatrixWorld(true);wrapper.attach(object);
+ const rootIndex=objects.indexOf(object);if(rootIndex>=0)objects[rootIndex]=wrapper;
+ selectedObjects=selectedObjects.map(item=>item===object?wrapper:item);
+ if(selected===object)selected=wrapper;
+ $('#selected-name').textContent=wrapper.name;$('#selbar-label').textContent=wrapper.name;
+ renderList();
+ return wrapper;
+}
+function applyPivotLocalOffset(wrapper,delta){
+ if(!wrapper||delta.lengthSq()<1e-12)return;
+ wrapper.children.forEach(child=>child.position.sub(delta));
+ const parentSpaceOffset=delta.clone().multiply(wrapper.scale).applyQuaternion(wrapper.quaternion);
+ wrapper.position.add(parentSpaceOffset);
+ const current=Array.isArray(wrapper.userData.editorPivotOffset)?wrapper.userData.editorPivotOffset:[0,0,0];
+ wrapper.userData.editorPivotOffset=[current[0]+delta.x,current[1]+delta.y,current[2]+delta.z];
+ wrapper.updateMatrixWorld(true);
+}
+function setPivotAtWorldPoint(point,label){
+ if(!selected||selectedObjects.length!==1){toast('Select exactly one object to edit its pivot');return}
+ if(selected.userData.editorLocked||!selected.visible){toast('Unlock and show the object first');return}
+ recordHistory();
+ const wrapper=ensurePivotWrapper(selected);if(!wrapper)return;
+ wrapper.updateWorldMatrix(true,false);
+ const localDelta=wrapper.worldToLocal(point.clone());
+ applyPivotLocalOffset(wrapper,localDelta);
+ selected=wrapper;selectedObjects=[wrapper];
+ attachCurrentSelection();refreshFields();renderList();toast(label);
+}
+function setPivotPreset(preset){
+ if(!selected||selectedObjects.length!==1){toast('Select exactly one object to edit its pivot');return}
+ if(preset==='original'){
+  if(!selected.userData.editorPivotWrapper){toast('Pivot is already at its original position');return}
+  const offset=selected.userData.editorPivotOffset||[0,0,0];
+  const delta=new THREE.Vector3(-offset[0],-offset[1],-offset[2]);
+  if(delta.lengthSq()<1e-12){toast('Pivot is already at its original position');return}
+  recordHistory();applyPivotLocalOffset(selected,delta);attachCurrentSelection();refreshFields();renderList();toast('Original pivot restored');return;
+ }
+ if(selected.userData.editorLocked||!selected.visible){toast('Unlock and show the object first');return}
+ selected.updateWorldMatrix(true,false);
+ const bounds=new THREE.Box3().setFromObject(selected);
+ let point;
+ if(preset==='center')point=bounds.getCenter(new THREE.Vector3());
+ else if(preset==='bottom')point=new THREE.Vector3((bounds.min.x+bounds.max.x)/2,bounds.min.y,(bounds.min.z+bounds.max.z)/2);
+ else if(preset==='world')point=new THREE.Vector3(0,0,0);
+ if(point)setPivotAtWorldPoint(point,preset==='center'?'Pivot set to geometry center':preset==='bottom'?'Pivot set to bottom center':'Pivot set to world origin');
+}
+function setPivotEditMode(active,showMessage=true){
+ if(active){
+  if(!selected||selectedObjects.length!==1){toast('Select exactly one object first');return}
+  if(selected.userData.editorLocked||!selected.visible){toast('Unlock and show the object first');return}
+  if(!pivotEditMode)savedTransformSpace=transform.space||'world';
+  pivotEditMode=true;$('#pivot-edit-btn')?.classList.add('active');$('#pivot-edit-btn')?.setAttribute('aria-pressed','true');
+  attachCurrentSelection();if(showMessage)toast('Move the pivot gizmo, not the object');
+ }else{
+  pivotEditMode=false;$('#pivot-edit-btn')?.classList.remove('active');$('#pivot-edit-btn')?.setAttribute('aria-pressed','false');
+  pivotHandle.visible=false;transform.detach();transform.setSpace(savedTransformSpace||'world');transform.setMode(transformMode);
+  if(selected&&selected.visible&&!selected.userData.editorLocked)transform.attach(selected);
+  if(showMessage)toast('Pivot edit mode off');
+ }
+}
+function handleTransformObjectChange(){
+ if(pivotEditMode&&transform.object===pivotHandle&&selected){
+  const worldTarget=pivotHandle.getWorldPosition(new THREE.Vector3());
+  const wrapper=ensurePivotWrapper(selected);if(!wrapper)return;
+  wrapper.updateWorldMatrix(true,false);
+  const localDelta=wrapper.worldToLocal(worldTarget.clone());
+  if(localDelta.lengthSq()>1e-12)applyPivotLocalOffset(wrapper,localDelta);
+  pivotHandle.position.copy(wrapper.getWorldPosition(new THREE.Vector3()));
+  pivotHandle.updateMatrixWorld(true);refreshFields();return;
+ }
+ refreshFields();
+}
+document.querySelectorAll('[data-pivot-action]').forEach(button=>button.addEventListener('click',()=>setPivotPreset(button.dataset.pivotAction)));
+$('#pivot-edit-btn')?.addEventListener('click',()=>setPivotEditMode(!pivotEditMode));
+
 function refreshFields(){if(!selected)return;makeFields('#position-fields',['X','Y','Z'],[selected.position.x,selected.position.y,selected.position.z],'position');makeFields('#rotation-fields',['X','Y','Z'],[THREE.MathUtils.radToDeg(selected.rotation.x),THREE.MathUtils.radToDeg(selected.rotation.y),THREE.MathUtils.radToDeg(selected.rotation.z)],'rotation');makeFields('#scale-fields',['X','Y','Z'],[selected.scale.x,selected.scale.y,selected.scale.z],'scale');$('#scale-state').textContent=uniform?'UNIFORM':'FREE';$('#scale-hint').textContent=uniform?'Uniform mode: changing one axis updates all three axes.':'Scale each axis independently. Enable uniform scaling to resize proportionally.'}
-function setMode(m){transform.setMode(m);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===m))}
+function setMode(m){if(pivotEditMode)setPivotEditMode(false,false);transformMode=m;transform.setMode(m);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===m))}
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 [['translation','grid-step','grid'],['rotation','angle-step','angle'],['scale','scale-step','step']].forEach(([kind,inputId,setting])=>{
  const button=$('#snap-'+kind),input=$('#'+inputId);
@@ -345,11 +452,11 @@ $('#home-new-scene').onclick=()=>{$('#new-scene').click();resumeScene()};
 $('#exit-immersive')?.addEventListener('click',toggleFullscreen);
 
 
-$('#duplicate-btn').onclick=()=>{if(!selectedObjects.length)return;recordHistory();const copies=selectedObjects.map(o=>{const c=o.clone(true);c.position.x+=1;return addObject(c,o.name+' copy',false)});selected=copies.at(-1);selectedObjects=copies;transform.attach(selected);renderList();toast(copies.length+' object(s) duplicated')};
-$('#delete-btn').onclick=()=>{if(!selectedObjects.length)return;recordHistory();const removed=[...selectedObjects];removed.forEach(o=>scene.remove(o));objects=objects.filter(o=>!removed.includes(o));selectedObjects=[];selected=null;transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast(removed.length+' object(s) deleted')};
+$('#duplicate-btn').onclick=()=>{if(!selectedObjects.length)return;if(pivotEditMode)setPivotEditMode(false,false);recordHistory();const copies=selectedObjects.map(o=>{const c=o.clone(true);c.position.x+=1;return addObject(c,o.name+' copy',false)});selected=copies.at(-1);selectedObjects=copies;attachCurrentSelection();renderList();toast(copies.length+' object(s) duplicated')};
+$('#delete-btn').onclick=()=>{if(!selectedObjects.length)return;recordHistory();const removed=[...selectedObjects];removed.forEach(o=>scene.remove(o));objects=objects.filter(o=>!removed.includes(o));selectedObjects=[];selected=null;transform.detach();pivotHandle.visible=false;$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast(removed.length+' object(s) deleted')};
 $('#focus-btn').onclick=()=>{if(!selected)return;const box=new THREE.Box3().setFromObject(selected),center=box.getCenter(new THREE.Vector3());orbit.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(4,3,5))};
 $('#grid-btn').onclick=()=>{if(isoViewActive){gridVisibilityBeforeIso=!gridVisibilityBeforeIso;grid.visible=false;toast(gridVisibilityBeforeIso?'Grid will show when Isometric is off':'Grid will stay hidden when Isometric is off');}else{grid.visible=!grid.visible;$('#grid-btn').classList.toggle('active',grid.visible)}};
-$('#new-scene').onclick=()=>{recordHistory();transform.detach();objects.forEach(o=>scene.remove(o));objects=[];selected=null;selectedObjects=[];$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast('New empty scene')};
+$('#new-scene').onclick=()=>{if(pivotEditMode)setPivotEditMode(false,false);recordHistory();transform.detach();pivotHandle.visible=false;objects.forEach(o=>scene.remove(o));objects=[];selected=null;selectedObjects=[];$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast('New empty scene')};
 $('#import-btn').onclick=()=>$('#file-input').click();
 $('#file-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const url=URL.createObjectURL(f);try{let obj;if(f.name.toLowerCase().endsWith('.obj'))obj=new OBJLoader().parse(await f.text());else obj=(await new GLTFLoader().loadAsync(url)).scene;addObject(obj,f.name.replace(/\.[^.]+$/,''));toast('Imported '+f.name)}catch(err){console.error(err);toast('Could not import file')}finally{URL.revokeObjectURL(url);e.target.value=''}};
 $('#export-btn').onclick=()=>{const out=new THREE.Scene();objects.forEach(o=>out.add(o.clone(true)));new GLTFExporter().parse(out,async result=>{const blob=new Blob([result],{type:'model/gltf-binary'});const data=await blob.arrayBuffer();if(window.electronAPI?.saveFile){const saved=await window.electronAPI.saveFile({data:Array.from(new Uint8Array(data)),defaultName:'electron-scene.glb'});if(!saved.canceled)toast('GLB exported successfully')}else if(navigator.canShare?.({files:[new File([blob],'electron-scene.glb',{type:'model/gltf-binary'})]})){const file=new File([blob],'electron-scene.glb',{type:'model/gltf-binary'});await navigator.share({files:[file],title:'Export 3D model'});toast('GLB shared successfully')}else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='electron-scene.glb';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);toast('GLB downloaded')}},err=>{console.error(err);toast('Export failed')},{binary:true})};
