@@ -27,7 +27,7 @@ function ensureStudioEnvironment(){
  if(environmentTarget)return;
  const generator=new THREE.PMREMGenerator(renderer);generator.compileEquirectangularShader();
  const room=new RoomEnvironment();environmentTarget=generator.fromScene(room,.04);scene.environment=environmentTarget.texture;
- room.dispose();generator.dispose();
+ generator.dispose();
 }
 function setStudioPreset(preset){
  studioPreset=preset;
@@ -53,7 +53,6 @@ function setViewportShading(mode){
  renderer.toneMappingExposure=mode==='rendered'?1.18:1.08;
  key.castShadow=mode!=='wireframe';renderer.shadowMap.enabled=mode!=='wireframe';
  document.querySelectorAll('[data-shading]').forEach(button=>{button.classList.toggle('active',button.dataset.shading===mode);button.setAttribute('aria-pressed',String(button.dataset.shading===mode));});
- const hint={solid:'Solid viewport',material:'Material preview',wireframe:'Wireframe viewport',rendered:'Rendered preview'}[$('#shading-status')?.textContent=mode]||'';
  const status=$('#shading-status');if(status)status.textContent=({solid:'SOLID',material:'MATERIAL',wireframe:'WIREFRAME',rendered:'RENDERED'})[mode];
 }
 const orbit=new OrbitControls(camera,renderer.domElement);orbit.enableDamping=true;orbit.target.set(0,.8,0);
