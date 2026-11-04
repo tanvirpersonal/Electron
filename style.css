@@ -344,3 +344,15 @@ body.home-view #home-screen{display:grid}
 
 /* Camera view presets */
 .camera-presets{display:flex;align-items:center;gap:2px;padding:2px;border:1px solid var(--line,rgba(255,255,255,.1));border-radius:10px;background:rgba(255,255,255,.035)}.camera-presets .camera-view{width:29px;min-width:29px;height:29px;padding:0;font-size:10px;font-weight:700;letter-spacing:-.3px}.camera-presets .camera-view:active{background:rgba(220,70,85,.2)}#frame-all{font-size:18px;font-weight:700}
+
+
+/* Camera presets live in the top toolbar, keeping the left tool rail focused. */
+.topbar-camera{flex:0 0 auto;margin-left:auto;margin-right:5px;gap:2px;padding:2px 4px}
+.topbar-camera .camera-view{width:27px;min-width:27px;height:27px;font-size:9px}
+@media(max-width:700px) and (orientation:landscape){
+ .topbar-camera{gap:1px;padding:1px 2px;margin-right:2px}
+ .topbar-camera .camera-view{width:24px;min-width:24px;height:25px;font-size:8px}
+}
+@media(max-height:430px) and (orientation:landscape){
+ .topbar-camera .camera-view{height:24px;width:24px;min-width:24px}
+}
