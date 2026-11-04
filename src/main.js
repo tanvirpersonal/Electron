@@ -56,7 +56,7 @@ function restoreHistorySnapshot(snapshot){
   selected=snapshot.activeIndex>=0?objects[snapshot.activeIndex]:(selectedObjects.at(-1)||null);
   if(selected){
    if(!selectedObjects.includes(selected))selectedObjects.push(selected);
-   transform.attach(selected);
+   if(selected.visible&&!selected.userData.editorLocked)transform.attach(selected);else transform.detach();
    $('#empty-state').hidden=true;
    $('#properties').hidden=false;
    $('#selected-name').textContent=selected.name;
@@ -118,10 +118,47 @@ function addPrimitive(type){
  const mesh=new THREE.Mesh(geometry,material);mesh.position.y=offset;addObject(mesh,name);toast(name+' added');
 }
 function addCube(){addPrimitive('cube')}
-function select(o){selected=o;selectedObjects=[o];transform.attach(o);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=o.name;$('#selbar').hidden=false;$('#selbar-label').textContent=o.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);renderList();refreshFields();syncMaterialEditor();}
-function toggleMultiSelection(o){if(!multiSelect){select(o);return}const i=selectedObjects.indexOf(o);if(i>=0){selectedObjects.splice(i,1);if(selected===o)selected=selectedObjects.at(-1)||null}else{selectedObjects.push(o);selected=o}if(selected){transform.attach(selected);$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=selected.name;$('#selbar').hidden=false;$('#selbar-label').textContent=selected.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);refreshFields();syncMaterialEditor()}else{transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false)}renderList()}
+function select(o){selected=o;selectedObjects=[o];if(o.visible&&!o.userData.editorLocked)transform.attach(o);else transform.detach();$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=o.name;$('#selbar').hidden=false;$('#selbar-label').textContent=o.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);renderList();refreshFields();syncMaterialEditor();}
+function toggleMultiSelection(o){if(!multiSelect){select(o);return}const i=selectedObjects.indexOf(o);if(i>=0){selectedObjects.splice(i,1);if(selected===o)selected=selectedObjects.at(-1)||null}else{selectedObjects.push(o);selected=o}if(selected){if(selected.visible&&!selected.userData.editorLocked)transform.attach(selected);else transform.detach();$('#empty-state').hidden=true;$('#properties').hidden=false;$('#selected-name').textContent=selected.name;$('#selbar').hidden=false;$('#selbar-label').textContent=selected.name;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=false);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=true);refreshFields();syncMaterialEditor()}else{transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false)}renderList()}
 $('#multi-select-btn').onclick=()=>{multiSelect=!multiSelect;$('#multi-select-btn').classList.toggle('active',multiSelect);if(!multiSelect&&selectedObjects.length>1)selectedObjects=[selected].filter(Boolean);renderList();syncMaterialEditor();toast(multiSelect?'Multi-select on: tap objects to add':'Multi-select off')};
-function renderList(){const list=$('#object-list');list.innerHTML='';objects.forEach(o=>{const b=document.createElement('button');b.className='object-item'+(selectedObjects.includes(o)?' selected':'');const icon=document.createElement('span');icon.className='cube-icon';icon.textContent='⬡';const label=document.createElement('span');label.textContent=o.name;b.append(icon,label);b.onclick=()=>toggleMultiSelection(o);list.append(b)});$('#object-count').textContent=objects.length+' OBJECT'+(objects.length===1?'':'S')}
+function renderList(){
+ const list=$('#object-list');list.innerHTML='';
+ objects.forEach(o=>{
+  const row=document.createElement('div');
+  row.className='object-item'+(selectedObjects.includes(o)?' selected':'')+(!o.visible?' is-hidden':'')+(o.userData.editorLocked?' is-locked':'');
+  const selectButton=document.createElement('button');
+  selectButton.type='button';selectButton.className='object-select';selectButton.title='Select '+o.name;
+  const icon=document.createElement('span');icon.className='cube-icon';icon.textContent='⬡';
+  const label=document.createElement('span');label.className='object-label';label.textContent=o.name;
+  selectButton.append(icon,label);
+  if(o.userData.editorLocked){const badge=document.createElement('span');badge.className='object-state';badge.textContent='LOCKED';selectButton.append(badge)}
+  selectButton.addEventListener('click',()=>toggleMultiSelection(o));
+  const actions=document.createElement('div');actions.className='object-actions';
+  const action=(symbol,title,onClick,extra='')=>{
+   const button=document.createElement('button');button.type='button';button.className='object-action '+extra;button.textContent=symbol;button.title=title;button.setAttribute('aria-label',title);
+   button.addEventListener('click',event=>{event.stopPropagation();onClick()});actions.append(button);return button;
+  };
+  action('✎','Rename '+o.name,()=>{
+   const entered=window.prompt('Rename object',o.name);if(entered===null)return;
+   const name=entered.trim().replace(/\\s+/g,' ').slice(0,48);if(!name||name===o.name)return;
+   recordHistory();o.name=name;
+   if(selected===o){$('#selected-name').textContent=name;$('#selbar-label').textContent=name}
+   renderList();toast('Object renamed');
+  });
+  action(o.visible?'◉':'⊘',o.visible?'Hide object':'Show object',()=>{
+   recordHistory();o.visible=!o.visible;
+   if(selected===o){if(o.visible&&!o.userData.editorLocked)transform.attach(o);else transform.detach()}
+   renderList();toast(o.visible?'Object shown':'Object hidden');
+  });
+  action(o.userData.editorLocked?'▣':'⌑',o.userData.editorLocked?'Unlock object':'Lock object',()=>{
+   recordHistory();o.userData.editorLocked=!o.userData.editorLocked;
+   if(selected===o){if(o.userData.editorLocked||!o.visible)transform.detach();else transform.attach(o)}
+   renderList();toast(o.userData.editorLocked?'Object locked':'Object unlocked');
+  });
+  row.append(selectButton,actions);list.append(row);
+ });
+ $('#object-count').textContent=objects.length+' OBJECT'+(objects.length===1?'':'S');
+}
 function makeFields(id,axes,values,type){const host=$(id);host.innerHTML='';axes.forEach((axis,i)=>{const label=document.createElement('label');label.className='axis-field';const b=document.createElement('b');b.textContent=axis;b.style.color=['#e28d8d','#8fcf9c','#8da9ed'][i];const input=document.createElement('input');input.type='number';input.step=type==='rotation'?1:.1;input.value=Number(values[i].toFixed(3));input.addEventListener('change',()=>{if(!selected)return;recordHistory();let v=Number(input.value)||0;const target=type==='position'?selected.position:type==='rotation'?selected.rotation:selected.scale;if(type==='rotation')target[axis.toLowerCase()]=THREE.MathUtils.degToRad(v);else if(type==='scale'&&uniform){if(!mirror)v=Math.max(.001,v);selected.scale.setScalar(v)}else{if(type==='scale'&&!mirror)v=Math.max(.001,v);target[axis.toLowerCase()]=v}refreshFields()});label.append(b,input);host.append(label)})}
 
 function getSelectedMeshes(){
@@ -259,6 +296,7 @@ renderer.domElement.addEventListener('pointerdown',e=>{
  if(touchDrag){touchDrag=null;clearTimeout(longPressTimer);orbit.enabled=true;return}
  const o=hitObject(e.clientX,e.clientY);if(!o)return;
  toggleMultiSelection(o);
+ if(!o.visible||o.userData.editorLocked)return;
  const start={x:e.clientX,y:e.clientY,obj:o,origin:o.position.clone(),planeY:o.position.y,moved:false,historyRecorded:false};
  touchDrag=start;orbit.enabled=false;
  longPressTimer=setTimeout(()=>{if(touchDrag===start&&!start.moved){touchDrag=null;orbit.enabled=true;showContextMenu(o,e.clientX,e.clientY)}},560);
