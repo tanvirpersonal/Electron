@@ -307,10 +307,19 @@ async function toggleFullscreen(){
 }
 $('#fullscreen-btn').onclick=toggleFullscreen;
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement;$('#app').classList.toggle('immersive',active);$('#fullscreen-btn').classList.toggle('active',active);requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))});
+let isoViewActive=false,gridVisibilityBeforeIso=true;
 function setCameraView(direction,label='Camera view'){
  const distance=Math.max(camera.position.distanceTo(orbit.target),6);
  camera.position.copy(orbit.target).add(direction.clone().normalize().multiplyScalar(distance));
  camera.up.copy(Math.abs(direction.y)>.99?new THREE.Vector3(0,0,-1):new THREE.Vector3(0,1,0));camera.lookAt(orbit.target);orbit.update();toast(label);
+}
+function setIsoView(active){
+ isoViewActive=active;
+ const isoButton=document.querySelector('[data-camera-view="iso"]');
+ if(isoButton)isoButton.classList.toggle('active',active);
+ if(active){gridVisibilityBeforeIso=grid.visible;grid.visible=false;}
+ else{grid.visible=gridVisibilityBeforeIso;}
+ $('#grid-btn').classList.toggle('active',grid.visible);
 }
 function frameAll(){
  if(!objects.length){orbit.target.set(0,.8,0);camera.position.set(7,6,8);orbit.update();return}
@@ -320,8 +329,11 @@ function frameAll(){
  orbit.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(1,0.8,1).normalize().multiplyScalar(distance));camera.near=Math.max(.01,distance/1000);camera.far=Math.max(1000,distance*20);camera.updateProjectionMatrix();orbit.update();toast('Framed all objects');
 }
 document.querySelectorAll('[data-camera-view]').forEach(button=>button.addEventListener('click',()=>{
+ const view=button.dataset.cameraView;
+ if(view==='iso'&&isoViewActive){setIsoView(false);toast('Isometric view off');return;}
+ if(view!=='iso'&&isoViewActive)setIsoView(false);
  const views={top:new THREE.Vector3(0,1,0),front:new THREE.Vector3(0,0,1),back:new THREE.Vector3(0,0,-1),left:new THREE.Vector3(-1,0,0),right:new THREE.Vector3(1,0,0),iso:new THREE.Vector3(1,1,1)};
- const direction=views[button.dataset.cameraView];if(direction)setCameraView(direction,button.title||'Camera view');
+ const direction=views[view];if(direction){setCameraView(direction,button.title||'Camera view');if(view==='iso')setIsoView(true);}
 }));
 $('#frame-all')?.addEventListener('click',frameAll);
 $('#camera-reset').onclick=()=>{camera.position.set(7,6,8);orbit.target.set(0,.8,0);orbit.update();toast('Camera reset')};
@@ -336,7 +348,7 @@ $('#exit-immersive')?.addEventListener('click',toggleFullscreen);
 $('#duplicate-btn').onclick=()=>{if(!selectedObjects.length)return;recordHistory();const copies=selectedObjects.map(o=>{const c=o.clone(true);c.position.x+=1;return addObject(c,o.name+' copy',false)});selected=copies.at(-1);selectedObjects=copies;transform.attach(selected);renderList();toast(copies.length+' object(s) duplicated')};
 $('#delete-btn').onclick=()=>{if(!selectedObjects.length)return;recordHistory();const removed=[...selectedObjects];removed.forEach(o=>scene.remove(o));objects=objects.filter(o=>!removed.includes(o));selectedObjects=[];selected=null;transform.detach();$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast(removed.length+' object(s) deleted')};
 $('#focus-btn').onclick=()=>{if(!selected)return;const box=new THREE.Box3().setFromObject(selected),center=box.getCenter(new THREE.Vector3());orbit.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(4,3,5))};
-$('#grid-btn').onclick=()=>{grid.visible=!grid.visible;$('#grid-btn').classList.toggle('active',grid.visible)};
+$('#grid-btn').onclick=()=>{if(isoViewActive){gridVisibilityBeforeIso=!gridVisibilityBeforeIso;grid.visible=false;toast(gridVisibilityBeforeIso?'Grid will show when Isometric is off':'Grid will stay hidden when Isometric is off');}else{grid.visible=!grid.visible;$('#grid-btn').classList.toggle('active',grid.visible)}};
 $('#new-scene').onclick=()=>{recordHistory();transform.detach();objects.forEach(o=>scene.remove(o));objects=[];selected=null;selectedObjects=[];$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast('New empty scene')};
 $('#import-btn').onclick=()=>$('#file-input').click();
 $('#file-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const url=URL.createObjectURL(f);try{let obj;if(f.name.toLowerCase().endsWith('.obj'))obj=new OBJLoader().parse(await f.text());else obj=(await new GLTFLoader().loadAsync(url)).scene;addObject(obj,f.name.replace(/\.[^.]+$/,''));toast('Imported '+f.name)}catch(err){console.error(err);toast('Could not import file')}finally{URL.revokeObjectURL(url);e.target.value=''}};
