@@ -335,10 +335,10 @@ function setPivotEditMode(active,showMessage=true){
   if(!selected||selectedObjects.length!==1){toast('Select exactly one object first');return}
   if(selected.userData.editorLocked||!selected.visible){toast('Unlock and show the object first');return}
   if(!pivotEditMode)savedTransformSpace=transform.space||'world';
-  pivotEditMode=true;$('#pivot-edit-btn')?.classList.add('active');$('#pivot-edit-btn')?.setAttribute('aria-pressed','true');
+  pivotEditMode=true;const pivotButton=$('#pivot-edit-btn');if(pivotButton){pivotButton.classList.add('active');pivotButton.setAttribute('aria-pressed','true');pivotButton.textContent='Finish Pivot Editing';}
   attachCurrentSelection();if(showMessage)toast('Move the pivot gizmo, not the object');
  }else{
-  pivotEditMode=false;$('#pivot-edit-btn')?.classList.remove('active');$('#pivot-edit-btn')?.setAttribute('aria-pressed','false');
+  pivotEditMode=false;const pivotButton=$('#pivot-edit-btn');if(pivotButton){pivotButton.classList.remove('active');pivotButton.setAttribute('aria-pressed','false');pivotButton.textContent='Place Pivot';}
   pivotHandle.visible=false;transform.detach();transform.setSpace(savedTransformSpace||'world');transform.setMode(transformMode);
   if(selected&&selected.visible&&!selected.userData.editorLocked)transform.attach(selected);
   if(showMessage)toast('Pivot edit mode off');
@@ -453,7 +453,7 @@ $('#exit-immersive')?.addEventListener('click',toggleFullscreen);
 
 
 $('#duplicate-btn').onclick=()=>{if(!selectedObjects.length)return;if(pivotEditMode)setPivotEditMode(false,false);recordHistory();const copies=selectedObjects.map(o=>{const c=o.clone(true);c.position.x+=1;return addObject(c,o.name+' copy',false)});selected=copies.at(-1);selectedObjects=copies;attachCurrentSelection();renderList();toast(copies.length+' object(s) duplicated')};
-$('#delete-btn').onclick=()=>{if(!selectedObjects.length)return;recordHistory();const removed=[...selectedObjects];removed.forEach(o=>scene.remove(o));objects=objects.filter(o=>!removed.includes(o));selectedObjects=[];selected=null;transform.detach();pivotHandle.visible=false;$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast(removed.length+' object(s) deleted')};
+$('#delete-btn').onclick=()=>{if(!selectedObjects.length)return;if(pivotEditMode)setPivotEditMode(false,false);recordHistory();const removed=[...selectedObjects];removed.forEach(o=>scene.remove(o));objects=objects.filter(o=>!removed.includes(o));selectedObjects=[];selected=null;transform.detach();pivotHandle.visible=false;$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast(removed.length+' object(s) deleted')};
 $('#focus-btn').onclick=()=>{if(!selected)return;const box=new THREE.Box3().setFromObject(selected),center=box.getCenter(new THREE.Vector3());orbit.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(4,3,5))};
 $('#grid-btn').onclick=()=>{if(isoViewActive){gridVisibilityBeforeIso=!gridVisibilityBeforeIso;grid.visible=false;toast(gridVisibilityBeforeIso?'Grid will show when Isometric is off':'Grid will stay hidden when Isometric is off');}else{grid.visible=!grid.visible;$('#grid-btn').classList.toggle('active',grid.visible)}};
 $('#new-scene').onclick=()=>{if(pivotEditMode)setPivotEditMode(false,false);recordHistory();transform.detach();pivotHandle.visible=false;objects.forEach(o=>scene.remove(o));objects=[];selected=null;selectedObjects=[];$('#properties').hidden=true;$('#empty-state').hidden=false;$('#selbar').hidden=true;document.querySelectorAll('.needs-sel').forEach(el=>el.hidden=true);document.querySelectorAll('.empty-sel').forEach(el=>el.hidden=false);renderList();toast('New empty scene')};
