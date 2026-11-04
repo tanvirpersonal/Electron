@@ -383,3 +383,35 @@ body.home-view #home-screen{display:grid}
 @media(max-width:700px){.viewport-shading{top:calc(var(--safe-top) + 65px);right:calc(var(--safe-right) + 8px);gap:4px;padding:5px 6px}.shade-btn{min-height:27px;padding:0 7px;font-size:8px}.studio-presets{gap:1px;padding-left:3px}.studio-presets .shade-extra{padding:0 4px;font-size:7px}#shading-status{display:none}}
 @media(max-width:420px){.viewport-shading{left:calc(var(--safe-left) + 8px);right:calc(var(--safe-right) + 8px);max-width:none;justify-content:center}.studio-presets .shade-extra{padding:0 3px}.shade-btn{padding:0 6px}}
 @media(orientation:landscape) and (max-height:430px){.viewport-shading{top:calc(var(--safe-top) + 57px);padding:3px 5px}.shade-btn,.shade-extra{min-height:23px}.studio-presets .shade-extra{min-height:21px}}
+
+/* Refined two-row editor header: shading controls above the main action bar. */
+@media (orientation:landscape) and (min-width:600px){
+  .viewport-shading{
+    top:calc(var(--safe-top) + 7px);
+    left:50%;
+    right:auto;
+    transform:translateX(-50%);
+    max-width:calc(100% - 28px);
+    justify-content:center;
+    z-index:26;
+  }
+  .topbar{
+    top:calc(var(--safe-top) + 49px);
+    height:47px;
+    gap:7px;
+  }
+  .topbar-camera{margin-left:auto}
+  .selbar{
+    top:auto;
+    bottom:calc(var(--safe-bottom) + 9px);
+    right:calc(var(--safe-right) + 12px);
+    left:auto;
+    transform:none;
+  }
+}
+@media (orientation:landscape) and (max-height:430px){
+  .viewport-shading{top:calc(var(--safe-top) + 4px);padding:3px 5px}
+  .topbar{top:calc(var(--safe-top) + 42px);height:42px}
+  .selbar{bottom:calc(var(--safe-bottom) + 5px);right:calc(var(--safe-right) + 9px);min-height:37px}
+  .selbar .ibtn{width:29px;height:29px}
+}
