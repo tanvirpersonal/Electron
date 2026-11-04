@@ -611,3 +611,10 @@ body.home-view #home-screen{display:grid}
 @media(orientation:portrait){
   .selbar{top:auto;bottom:calc(var(--safe-bottom) + 72px)}
 }
+
+/* Very short landscape phones: a single 8-button column is taller than the space under the
+   header, so it slid under the top bar. Use two columns pinned below the header instead. */
+@media (orientation:landscape) and (max-height:350px){
+  #app:not(.immersive) .rail{top:66px;transform:none;display:grid;grid-template-columns:repeat(2,30px);justify-items:center;gap:2px}
+  #app:not(.immersive) .rail .hsep{display:none}
+}
