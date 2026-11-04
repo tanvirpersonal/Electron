@@ -460,3 +460,53 @@ body.home-view #home-screen{display:grid}
   .topbar{top:calc(var(--safe-top) + 5px);row-gap:3px;padding:4px 7px 5px}
   .topbar .viewport-shading{padding:2px 5px}
 }
+
+/* Compact two-level header: primary actions on row one, shading on row two. */
+@media (orientation:landscape) and (min-width:600px){
+ .topbar{
+  top:calc(var(--safe-top) + 7px);
+  left:calc(var(--safe-left) + 12px);
+  right:calc(var(--safe-right) + 12px);
+  height:auto;min-height:0;
+  display:flex;flex-wrap:wrap;align-items:center;
+  justify-content:flex-start;
+  column-gap:7px;row-gap:5px;
+  padding:6px 9px 7px;
+ }
+ .topbar .spacer{flex:1 1 10px;min-width:10px}
+ .topbar .viewport-shading{
+  position:static;inset:auto;order:100;
+  flex:1 0 100%;width:100%;max-width:100%;
+  margin:0;transform:none;
+  display:grid;
+  grid-template-columns:auto auto auto 1fr;
+  grid-template-rows:repeat(2,24px);
+  align-items:center;justify-content:start;
+  column-gap:7px;row-gap:2px;
+  padding:3px 7px;
+  box-shadow:none;
+ }
+ .topbar .shading-modes{
+  grid-column:1;grid-row:1 / span 2;
+  display:grid;grid-template-columns:repeat(2,minmax(52px,auto));
+  grid-template-rows:repeat(2,24px);gap:2px;
+ }
+ .topbar .shade-btn{min-height:22px;padding:0 8px;font-size:8px;white-space:nowrap}
+ .topbar #shading-status{grid-column:2;grid-row:1 / span 2;align-self:center}
+ .topbar #flat-shading-btn{grid-column:3;grid-row:1 / span 2;min-height:23px}
+ .topbar .studio-presets{
+  grid-column:4;grid-row:1 / span 2;
+  display:flex;align-items:center;justify-content:flex-end;
+  gap:3px;padding-left:7px;
+ }
+ .topbar .studio-presets .shade-extra{min-height:22px;padding:0 7px;font-size:8px}
+ .selbar{top:auto;bottom:calc(var(--safe-bottom) + 9px);right:calc(var(--safe-right) + 12px);left:auto;transform:none}
+}
+@media (orientation:landscape) and (max-height:430px){
+ .topbar{top:calc(var(--safe-top) + 5px);row-gap:3px;padding:4px 7px 5px}
+ .topbar .viewport-shading{grid-template-rows:repeat(2,21px);padding:2px 5px}
+ .topbar .shading-modes{grid-template-rows:repeat(2,21px)}
+ .topbar .shade-btn,.topbar .studio-presets .shade-extra{min-height:20px}
+ .selbar{bottom:calc(var(--safe-bottom) + 5px);right:calc(var(--safe-right) + 9px);min-height:37px}
+ .selbar .ibtn{width:29px;height:29px}
+}
