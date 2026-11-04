@@ -370,3 +370,16 @@ body.home-view #home-screen{display:grid}
  .pivot-presets .btn{min-height:31px;font-size:8px}
  .pivot-edit-btn{min-height:34px;margin-top:6px}
 }
+
+/* Blender-inspired viewport shading controls */
+.viewport-shading{position:absolute;z-index:24;top:calc(var(--safe-top) + 68px);right:calc(var(--safe-right) + 14px);display:flex;align-items:center;gap:7px;max-width:calc(100% - 90px);padding:6px 8px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(17,18,27,.88);backdrop-filter:blur(18px);box-shadow:0 8px 28px rgba(0,0,0,.24)}
+.shading-modes{display:flex;align-items:center;gap:3px}
+.shade-btn,.shade-extra{min-height:28px;padding:0 9px;border:1px solid transparent;border-radius:7px;background:rgba(255,255,255,.045);color:#aaa8b7;font-size:9px;font-weight:800}
+.shade-btn.active,.shade-extra.active{border-color:rgba(181,140,255,.34);background:rgba(181,140,255,.18);color:#eadfff}
+#shading-status{padding:0 5px;color:#777486;font-size:7px;font-weight:900;letter-spacing:.8px}
+#flat-shading-btn{border-color:rgba(255,255,255,.08)}
+.studio-presets{display:flex;gap:2px;padding-left:5px;border-left:1px solid rgba(255,255,255,.1)}
+.studio-presets .shade-extra{min-height:25px;padding:0 6px;font-size:8px}
+@media(max-width:700px){.viewport-shading{top:calc(var(--safe-top) + 65px);right:calc(var(--safe-right) + 8px);gap:4px;padding:5px 6px}.shade-btn{min-height:27px;padding:0 7px;font-size:8px}.studio-presets{gap:1px;padding-left:3px}.studio-presets .shade-extra{padding:0 4px;font-size:7px}#shading-status{display:none}}
+@media(max-width:420px){.viewport-shading{left:calc(var(--safe-left) + 8px);right:calc(var(--safe-right) + 8px);max-width:none;justify-content:center}.studio-presets .shade-extra{padding:0 3px}.shade-btn{padding:0 6px}}
+@media(orientation:landscape) and (max-height:430px){.viewport-shading{top:calc(var(--safe-top) + 57px);padding:3px 5px}.shade-btn,.shade-extra{min-height:23px}.studio-presets .shade-extra{min-height:21px}}
