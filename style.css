@@ -298,3 +298,7 @@ body.home-view #home-screen{display:grid}
     bottom:calc(var(--safe-bottom) + 58px);
   }
 }
+
+/* History toolbar state */
+.topbar .ibtn:disabled{opacity:.32;cursor:not-allowed;filter:saturate(.35);background:rgba(255,255,255,.025);border-color:transparent}
+.topbar .ibtn:disabled:hover{background:rgba(255,255,255,.025);color:#c7c5d2}
