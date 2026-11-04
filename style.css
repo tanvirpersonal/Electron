@@ -415,3 +415,48 @@ body.home-view #home-screen{display:grid}
   .selbar{bottom:calc(var(--safe-bottom) + 5px);right:calc(var(--safe-right) + 9px);min-height:37px}
   .selbar .ibtn{width:29px;height:29px}
 }
+
+/* Unified two-row top toolbar: all viewport and editor controls share one panel. */
+@media (orientation:landscape) and (min-width:600px){
+  .topbar{
+    top:calc(var(--safe-top) + 8px);
+    left:calc(var(--safe-left) + 12px);
+    right:calc(var(--safe-right) + 12px);
+    height:auto;
+    min-height:0;
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:flex-start;
+    column-gap:8px;
+    row-gap:5px;
+    padding:6px 9px 7px;
+  }
+  .topbar .spacer{flex:1 1 12px;min-width:12px}
+  .topbar .viewport-shading{
+    position:static;
+    inset:auto;
+    order:100;
+    flex:0 0 auto;
+    width:max-content;
+    max-width:100%;
+    margin:0 auto;
+    transform:none;
+    justify-content:center;
+    box-shadow:none;
+    padding:4px 7px;
+  }
+  .topbar .shading-modes{flex:0 0 auto}
+  .topbar .shade-btn,.topbar .shade-extra{white-space:nowrap}
+  .selbar{
+    top:auto;
+    bottom:calc(var(--safe-bottom) + 9px);
+    right:calc(var(--safe-right) + 12px);
+    left:auto;
+    transform:none;
+  }
+}
+@media (orientation:landscape) and (max-height:430px){
+  .topbar{top:calc(var(--safe-top) + 5px);row-gap:3px;padding:4px 7px 5px}
+  .topbar .viewport-shading{padding:2px 5px}
+}
