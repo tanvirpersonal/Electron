@@ -605,3 +605,9 @@ body.home-view #home-screen{display:grid}
  .rail .ibtn{width:30px;height:30px}
  .rail .hsep{margin:2px auto}
 }
+
+/* Portrait: keep the selection bar above the dock. Pinned under the top bar it covered
+   the Flat shading button, so tapping Duplicate hit the wrong control. */
+@media(orientation:portrait){
+  .selbar{top:auto;bottom:calc(var(--safe-bottom) + 72px)}
+}
