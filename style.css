@@ -356,3 +356,17 @@ body.home-view #home-screen{display:grid}
 @media(max-height:430px) and (orientation:landscape){
  .topbar-camera .camera-view{height:24px;width:24px;min-width:24px}
 }
+
+/* Pivot and origin editor */
+.pivot-group{padding:11px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.018)}
+.pivot-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.pivot-presets .btn{min-width:0;min-height:35px;padding:0 4px;font-size:9px}
+.pivot-edit-btn{width:100%;min-height:39px;margin-top:8px;border-color:rgba(181,140,255,.28);background:rgba(181,140,255,.09);color:#dfceff;font-size:10px;font-weight:800}
+.pivot-edit-btn.active{border-color:rgba(255,201,107,.55);background:rgba(255,201,107,.14);color:#ffdb9a;box-shadow:0 0 0 1px rgba(255,201,107,.08) inset}
+.pivot-group .hint{margin-top:9px}
+@media(max-height:430px) and (orientation:landscape){
+ .pivot-group{padding:9px}
+ .pivot-presets{gap:4px}
+ .pivot-presets .btn{min-height:31px;font-size:8px}
+ .pivot-edit-btn{min-height:34px;margin-top:6px}
+}
