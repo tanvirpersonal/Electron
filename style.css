@@ -565,3 +565,32 @@ body.home-view #home-screen{display:grid}
  .selbar{bottom:calc(var(--safe-bottom) + 5px);right:calc(var(--safe-right) + 9px);min-height:37px}
  .selbar .ibtn{width:29px;height:29px}
 }
+
+/* Right-side shading block is exactly two rows. */
+@media (orientation:landscape) and (min-width:600px){
+ .topbar .viewport-shading{
+  grid-template-columns:auto 1fr;
+  grid-template-rows:1fr 1fr;
+  row-gap:3px;
+ }
+ .topbar .shading-modes{
+  grid-column:1 / span 2;grid-row:1;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-rows:1fr;gap:3px;
+ }
+ .topbar #shading-status{display:none}
+ .topbar #flat-shading-btn{grid-column:1;grid-row:2;min-height:18px;padding:0 6px}
+ .topbar .studio-presets{
+  grid-column:2;grid-row:2;
+  display:flex;justify-content:flex-end;gap:2px;
+  padding:2px 0 0;border-left:0;border-top:1px solid rgba(255,255,255,.1);
+ }
+ .topbar .studio-presets .shade-extra{flex:1 1 0;min-width:0;padding:0 3px}
+}
+@media (orientation:landscape) and (max-height:430px){
+ .topbar .viewport-shading{row-gap:2px}
+ .topbar .shading-modes{gap:2px}
+ .topbar .shade-btn{padding:0 3px;font-size:7px}
+ .topbar #flat-shading-btn{min-height:16px}
+ .topbar .studio-presets .shade-extra{min-height:15px;padding:0 2px;font-size:6px}
+}
