@@ -414,21 +414,42 @@ async function toggleFullscreen(){
 }
 $('#fullscreen-btn').onclick=toggleFullscreen;
 document.addEventListener('fullscreenchange',()=>{const active=!!document.fullscreenElement;$('#app').classList.toggle('immersive',active);$('#fullscreen-btn').classList.toggle('active',active);requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))});
-let isoViewActive=false,gridVisibilityBeforeIso=true;
+let isoViewActive=false,gridVisibilityBeforeIso=true,preIsoCameraState=null;
+function saveCameraState(){
+ return {position:camera.position.clone(),up:camera.up.clone(),target:orbit.target.clone(),zoom:camera.zoom};
+}
+function restoreCameraState(state){
+ if(!state)return;
+ camera.position.copy(state.position);camera.up.copy(state.up);camera.zoom=state.zoom;
+ camera.updateProjectionMatrix();orbit.target.copy(state.target);
+ camera.lookAt(orbit.target);camera.updateMatrixWorld(true);orbit.update();
+ // Re-apply the exact saved orientation after OrbitControls synchronizes.
+ camera.position.copy(state.position);camera.up.copy(state.up);camera.lookAt(state.target);camera.updateMatrixWorld(true);
+}
 function setCameraView(direction,label='Camera view'){
  const distance=Math.max(camera.position.distanceTo(orbit.target),6);
  camera.position.copy(orbit.target).add(direction.clone().normalize().multiplyScalar(distance));
- camera.up.copy(Math.abs(direction.y)>.99?new THREE.Vector3(0,0,-1):new THREE.Vector3(0,1,0));camera.lookAt(orbit.target);orbit.update();toast(label);
+ camera.up.copy(Math.abs(direction.y)>.99?new THREE.Vector3(0,0,-1):new THREE.Vector3(0,1,0));
+ camera.lookAt(orbit.target);camera.updateMatrixWorld(true);orbit.update();toast(label);
 }
 function setIsoView(active){
- isoViewActive=active;
+ if(active===isoViewActive)return;
  const isoButton=document.querySelector('[data-camera-view="iso"]');
+ if(active){
+  preIsoCameraState=saveCameraState();
+  gridVisibilityBeforeIso=grid.visible;
+  grid.visible=false;isoViewActive=true;
+ }else{
+  isoViewActive=false;
+  grid.visible=gridVisibilityBeforeIso;
+  restoreCameraState(preIsoCameraState);
+  preIsoCameraState=null;
+ }
  if(isoButton)isoButton.classList.toggle('active',active);
- if(active){gridVisibilityBeforeIso=grid.visible;grid.visible=false;}
- else{grid.visible=gridVisibilityBeforeIso;}
  $('#grid-btn').classList.toggle('active',grid.visible);
 }
 function frameAll(){
+ if(isoViewActive)setIsoView(false);
  if(!objects.length){orbit.target.set(0,.8,0);camera.position.set(7,6,8);orbit.update();return}
  const bounds=new THREE.Box3();objects.forEach(object=>bounds.expandByObject(object));
  const center=bounds.getCenter(new THREE.Vector3()),sphere=bounds.getBoundingSphere(new THREE.Sphere());
@@ -443,7 +464,7 @@ document.querySelectorAll('[data-camera-view]').forEach(button=>button.addEventL
  const direction=views[view];if(direction){setCameraView(direction,button.title||'Camera view');if(view==='iso')setIsoView(true);}
 }));
 $('#frame-all')?.addEventListener('click',frameAll);
-$('#camera-reset').onclick=()=>{camera.position.set(7,6,8);orbit.target.set(0,.8,0);orbit.update();toast('Camera reset')};
+$('#camera-reset').onclick=()=>{if(isoViewActive)setIsoView(false);camera.up.set(0,1,0);camera.position.set(7,6,8);orbit.target.set(0,.8,0);camera.lookAt(orbit.target);camera.updateMatrixWorld(true);orbit.update();toast('Camera reset')};
 function showHome(){if(document.fullscreenElement)document.exitFullscreen();$('#app').classList.remove('immersive');document.body.classList.add('home-view')}
 function resumeScene(){document.body.classList.remove('home-view');requestAnimationFrame(()=>renderer.setSize(viewport.clientWidth,viewport.clientHeight,false))}
 $('#home-btn').onclick=showHome;
