@@ -38,9 +38,9 @@ function cloneForHistory(source){
  });
  return copy;
 }
-function captureHistorySnapshot(){
- return {objects:objects.map(cloneForHistory),selection:selectedObjects.map(object=>objects.indexOf(object)).filter(index=>index>=0),activeIndex:selected?objects.indexOf(selected):-1,nextId};
-}
+function objectPath(object){const path=[];let node=object;while(node&&node!==scene){const parent=node.parent;if(!parent)return null;path.unshift(parent.children.indexOf(node));node=parent}return path.length?path:null}
+function resolveObjectPath(roots,path){if(!path?.length)return null;let node=roots[path[0]];for(let i=1;node&&i<path.length;i++)node=node.children[path[i]];return node||null}
+function captureHistorySnapshot(){return {objects:objects.map(cloneForHistory),selection:selectedObjects.map(objectPath).filter(Boolean),activePath:objectPath(selected),nextId};}
 function syncHistoryButtons(){
  const undoButton=$('#undo-btn'),redoButton=$('#redo-btn');
  if(undoButton){undoButton.disabled=undoStack.length===0;undoButton.setAttribute('aria-disabled',String(undoButton.disabled))}
@@ -131,45 +131,31 @@ function toggleMultiSelection(o){if(!multiSelect){select(o);return}const i=selec
 $('#multi-select-btn').onclick=()=>{multiSelect=!multiSelect;$('#multi-select-btn').classList.toggle('active',multiSelect);if(!multiSelect&&selectedObjects.length>1)selectedObjects=[selected].filter(Boolean);renderList();syncMaterialEditor();toast(multiSelect?'Multi-select on: tap objects to add':'Multi-select off')};
 function renderList(){
  const list=$('#object-list');list.innerHTML='';
- objects.forEach(o=>{
-  const row=document.createElement('div');
-  row.className='object-item'+(selectedObjects.includes(o)?' selected':'')+(!o.visible?' is-hidden':'')+(o.userData.editorLocked?' is-locked':'');
-  const selectButton=document.createElement('button');
-  selectButton.type='button';selectButton.className='object-select';selectButton.title='Select '+o.name;
-  const icon=document.createElement('span');icon.className='cube-icon';icon.textContent='⬡';
-  const label=document.createElement('span');label.className='object-label';label.textContent=o.name;
-  selectButton.append(icon,label);
+ const makeRow=(o,depth=0)=>{
+  const row=document.createElement('div');row.className='object-item'+(selectedObjects.includes(o)?' selected':'')+(!o.visible?' is-hidden':'')+(o.userData.editorLocked?' is-locked':'');row.style.paddingLeft=(7+depth*16)+'px';
+  const selectButton=document.createElement('button');selectButton.type='button';selectButton.className='object-select';selectButton.title='Select '+o.name;
+  const icon=document.createElement('span');icon.className='cube-icon';icon.textContent=o.isGroup?'▰':'⬡';
+  const label=document.createElement('span');label.className='object-label';label.textContent=o.name;selectButton.append(icon,label);
   if(o.userData.editorLocked){const badge=document.createElement('span');badge.className='object-state';badge.textContent='LOCKED';selectButton.append(badge)}
   selectButton.addEventListener('click',()=>toggleMultiSelection(o));
   const actions=document.createElement('div');actions.className='object-actions';
-  const action=(symbol,title,onClick,extra='')=>{
-   const button=document.createElement('button');button.type='button';button.className='object-action '+extra;button.textContent=symbol;button.title=title;button.setAttribute('aria-label',title);
-   button.addEventListener('click',event=>{event.stopPropagation();onClick()});actions.append(button);return button;
-  };
-  action('✎','Rename '+o.name,()=>{
-   const entered=window.prompt('Rename object',o.name);if(entered===null)return;
-   const name=entered.trim().replace(/\s+/g,' ').slice(0,48);if(!name||name===o.name)return;
-   recordHistory();o.name=name;
-   if(selected===o){$('#selected-name').textContent=name;$('#selbar-label').textContent=name}
-   renderList();toast('Object renamed');
-  });
-  action(o.visible?'◉':'⊘',o.visible?'Hide object':'Show object',()=>{
-   recordHistory();o.visible=!o.visible;
-   if(selected===o){if(o.visible&&!o.userData.editorLocked)transform.attach(o);else transform.detach()}
-   renderList();toast(o.visible?'Object shown':'Object hidden');
-  });
-  action(o.userData.editorLocked?'▣':'⌑',o.userData.editorLocked?'Unlock object':'Lock object',()=>{
-   recordHistory();o.userData.editorLocked=!o.userData.editorLocked;
-   if(selected===o){if(o.userData.editorLocked||!o.visible)transform.detach();else transform.attach(o)}
-   renderList();toast(o.userData.editorLocked?'Object locked':'Object unlocked');
-  });
+  const action=(symbol,title,onClick)=>{const button=document.createElement('button');button.type='button';button.className='object-action';button.textContent=symbol;button.title=title;button.setAttribute('aria-label',title);button.addEventListener('click',e=>{e.stopPropagation();onClick()});actions.append(button)};
+  action('✎','Rename '+o.name,()=>{const entered=window.prompt('Rename object',o.name);if(entered===null)return;const name=entered.trim().replace(/\s+/g,' ').slice(0,48);if(!name||name===o.name)return;recordHistory();o.name=name;if(selected===o){$('#selected-name').textContent=name;$('#selbar-label').textContent=name}renderList();toast('Object renamed')});
+  action(o.visible?'◉':'⊘',o.visible?'Hide object':'Show object',()=>{recordHistory();o.visible=!o.visible;if(selected===o){if(o.visible&&!o.userData.editorLocked)transform.attach(o);else transform.detach()}renderList();toast(o.visible?'Object shown':'Object hidden')});
+  action(o.userData.editorLocked?'▣':'⌑',o.userData.editorLocked?'Unlock object':'Lock object',()=>{recordHistory();o.userData.editorLocked=!o.userData.editorLocked;if(selected===o){if(o.userData.editorLocked||!o.visible)transform.detach();else transform.attach(o)}renderList();toast(o.userData.editorLocked?'Object locked':'Object unlocked')});
   row.append(selectButton,actions);list.append(row);
- });
- $('#object-count').textContent=objects.length+' OBJECT'+(objects.length===1?'':'S');updateAlignControls();
+  o.children.filter(child=>child.userData?.editorHierarchyNode).forEach(child=>makeRow(child,depth+1));
+ };
+ objects.forEach(o=>makeRow(o));$('#object-count').textContent=objects.length+' ROOT OBJECT'+(objects.length===1?'':'S');updateAlignControls();
 }
 function makeFields(id,axes,values,type){const host=$(id);host.innerHTML='';axes.forEach((axis,i)=>{const label=document.createElement('label');label.className='axis-field';const b=document.createElement('b');b.textContent=axis;b.style.color=['#e28d8d','#8fcf9c','#8da9ed'][i];const input=document.createElement('input');input.type='number';input.step=type==='rotation'?1:.1;input.value=Number(values[i].toFixed(3));input.addEventListener('change',()=>{if(!selected||selected.userData.editorLocked)return;recordHistory();let v=Number(input.value)||0;const target=type==='position'?selected.position:type==='rotation'?selected.rotation:selected.scale;if(type==='rotation')target[axis.toLowerCase()]=THREE.MathUtils.degToRad(v);else if(type==='scale'&&uniform){if(!mirror)v=Math.max(.001,v);selected.scale.setScalar(v)}else{if(type==='scale'&&!mirror)v=Math.max(.001,v);target[axis.toLowerCase()]=v}refreshFields()});label.append(b,input);host.append(label)})}
 
-function selectedEditableObjects(){return selectedObjects.filter(object=>objects.includes(object)&&!object.userData.editorLocked&&object.visible)}
+function getRootObject(object){let node=object;while(node.parent&&node.parent!==scene)node=node.parent;return node}
+function groupSelected(){const chosen=[...new Set(selectedObjects.map(getRootObject))].filter(o=>objects.includes(o));if(chosen.length<2){toast('Select at least 2 root objects');return}recordHistory();const group=new THREE.Group();group.name='Group '+nextId++;group.userData.editorHierarchyNode=true;scene.add(group);chosen.forEach(object=>group.attach(object));objects=objects.filter(object=>!chosen.includes(object));objects.push(group);select(group);toast('Grouped '+chosen.length+' objects')}
+function ungroupSelected(){const groups=selectedObjects.filter(o=>o.isGroup&&o.children.some(child=>child.userData?.editorHierarchyNode));if(!groups.length){toast('Select a group to ungroup');return}recordHistory();const released=[];groups.forEach(group=>{const parent=group.parent;[...group.children].filter(child=>child.userData?.editorHierarchyNode).forEach(child=>{parent.attach(child);released.push(child)});if(parent===scene)objects=objects.filter(o=>o!==group);group.parent?.remove(group)});if(released.length){selectedObjects=released;selected=released.at(-1);transform.attach(selected);$('#selected-name').textContent=selected.name;$('#selbar-label').textContent=selected.name;renderList();refreshFields();syncMaterialEditor();toast('Group separated')}}
+function parentSelected(){const parent=selected;if(!parent||selectedObjects.length<2){toast('Select children first, then the parent last');return}const children=selectedObjects.filter(o=>o!==parent);if(children.some(child=>child===parent||child.getObjectById(parent.id))){toast('Cannot create a parenting cycle');return}const valid=children.filter(child=>objects.includes(getRootObject(child))&&!parent.getObjectById(child.id));if(!valid.length){toast('No valid child objects selected');return}recordHistory();valid.forEach(child=>{const root=getRootObject(child);parent.attach(child);if(root===child)objects=objects.filter(o=>o!==root);child.userData.editorHierarchyNode=true});selectedObjects=[parent];selected=parent;transform.attach(parent);renderList();toast(valid.length+' child object(s) parented')}
+$('#group-btn')?.addEventListener('click',groupSelected);$('#ungroup-btn')?.addEventListener('click',ungroupSelected);$('#parent-btn')?.addEventListener('click',parentSelected);
+function selectedEditableObjects(){return selectedObjects.filter(object=>{let root=object;while(root.parent&&root.parent!==scene)root=root.parent;return objects.includes(root)&&!object.userData.editorLocked&&object.visible})}
 function updateAlignControls(){
  const count=selectedEditableObjects().length;
  document.querySelectorAll('[data-align], [data-distribute]').forEach(button=>{button.disabled=count<(button.hasAttribute('data-distribute')?3:2);button.setAttribute('aria-disabled',String(button.disabled))});
@@ -181,7 +167,7 @@ function alignSelection(axis,edge){
  reference.updateWorldMatrix(true,false);
  const refBox=new THREE.Box3().setFromObject(reference);
  const refValue=edge==='min'?refBox.min[axis]:edge==='max'?refBox.max[axis]:refBox.getCenter(new THREE.Vector3())[axis];
- const snapshot={objects:objects.map(cloneForHistory),selection:selectedObjects.map(object=>objects.indexOf(object)).filter(index=>index>=0),activeIndex:selected?objects.indexOf(selected):-1,nextId};
+ const snapshot={objects:objects.map(cloneForHistory),selection:selectedObjects.map(objectPath).filter(Boolean),activePath:objectPath(selected),nextId};
  let changed=0;
  targets.forEach(object=>{
   if(object===reference)return;
@@ -338,7 +324,7 @@ $('#new-scene').onclick=()=>{recordHistory();transform.detach();objects.forEach(
 $('#import-btn').onclick=()=>$('#file-input').click();
 $('#file-input').onchange=async e=>{const f=e.target.files[0];if(!f)return;const url=URL.createObjectURL(f);try{let obj;if(f.name.toLowerCase().endsWith('.obj'))obj=new OBJLoader().parse(await f.text());else obj=(await new GLTFLoader().loadAsync(url)).scene;addObject(obj,f.name.replace(/\.[^.]+$/,''));toast('Imported '+f.name)}catch(err){console.error(err);toast('Could not import file')}finally{URL.revokeObjectURL(url);e.target.value=''}};
 $('#export-btn').onclick=()=>{const out=new THREE.Scene();objects.forEach(o=>out.add(o.clone(true)));new GLTFExporter().parse(out,async result=>{const blob=new Blob([result],{type:'model/gltf-binary'});const data=await blob.arrayBuffer();if(window.electronAPI?.saveFile){const saved=await window.electronAPI.saveFile({data:Array.from(new Uint8Array(data)),defaultName:'electron-scene.glb'});if(!saved.canceled)toast('GLB exported successfully')}else if(navigator.canShare?.({files:[new File([blob],'electron-scene.glb',{type:'model/gltf-binary'})]})){const file=new File([blob],'electron-scene.glb',{type:'model/gltf-binary'});await navigator.share({files:[file],title:'Export 3D model'});toast('GLB shared successfully')}else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='electron-scene.glb';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1500);toast('GLB downloaded')}},err=>{console.error(err);toast('Export failed')},{binary:true})};
-function hitObject(clientX,clientY){const r=renderer.domElement.getBoundingClientRect();pointerNdc.set((clientX-r.left)/r.width*2-1,-((clientY-r.top)/r.height)*2+1);raycaster.setFromCamera(pointerNdc,camera);const hits=raycaster.intersectObjects(objects,true);if(!hits.length)return null;let root=hits[0].object;while(root.parent&&!objects.includes(root))root=root.parent;return root}
+function hitObject(clientX,clientY){const r=renderer.domElement.getBoundingClientRect();pointerNdc.set((clientX-r.left)/r.width*2-1,-((clientY-r.top)/r.height)*2+1);raycaster.setFromCamera(pointerNdc,camera);const hits=raycaster.intersectObjects(objects,true);if(!hits.length)return null;let node=hits[0].object,root=node;while(root.parent&&root.parent!==scene)root=root.parent;return node.userData?.editorHierarchyNode?node:root}
 function planePoint(clientX,clientY,y){const r=renderer.domElement.getBoundingClientRect();pointerNdc.set((clientX-r.left)/r.width*2-1,-((clientY-r.top)/r.height)*2+1);raycaster.setFromCamera(pointerNdc,camera);const plane=new THREE.Plane(new THREE.Vector3(0,1,0),-y),point=new THREE.Vector3();return raycaster.ray.intersectPlane(plane,point)?point:null}
 function showContextMenu(o,x,y){contextTarget=o;const menu=$('#touch-context');menu.hidden=false;menu.style.left=Math.max(8,Math.min(x,innerWidth-150))+'px';menu.style.top=Math.max(8,Math.min(y,innerHeight-130))+'px'}
 function hideContextMenu(){$('#touch-context').hidden=true;contextTarget=null}
