@@ -180,6 +180,19 @@
        <button id="delete-btn" class="btn danger"><svg class="ic"><use href="#i-trash"/></svg>Delete</button>
       </div>
      </div>
+     <div class="group align-group"><h3>Align &amp; distribute <small>WORLD BOUNDS</small></h3>
+      <p class="hint" id="align-selection-count">0 editable selected</p>
+      <div class="align-axis"><strong>X axis</strong><div class="align-buttons">
+       <button class="btn" data-align="x" data-edge="min" title="Align left edges">Left</button><button class="btn" data-align="x" data-edge="center" title="Align centers on X">Center</button><button class="btn" data-align="x" data-edge="max" title="Align right edges">Right</button>
+      </div><button class="btn distribute-btn" data-distribute="x">Distribute X</button></div>
+      <div class="align-axis"><strong>Y axis</strong><div class="align-buttons">
+       <button class="btn" data-align="y" data-edge="min" title="Align bottom edges">Bottom</button><button class="btn" data-align="y" data-edge="center" title="Align centers on Y">Center</button><button class="btn" data-align="y" data-edge="max" title="Align top edges">Top</button>
+      </div><button class="btn distribute-btn" data-distribute="y">Distribute Y</button></div>
+      <div class="align-axis"><strong>Z axis</strong><div class="align-buttons">
+       <button class="btn" data-align="z" data-edge="min" title="Align front edges">Front</button><button class="btn" data-align="z" data-edge="center" title="Align centers on Z">Center</button><button class="btn" data-align="z" data-edge="max" title="Align back edges">Back</button>
+      </div><button class="btn distribute-btn" data-distribute="z">Distribute Z</button></div>
+      <p class="hint">Align uses the active object as reference. Distribution preserves the outer bounds and creates equal gaps. Locked or hidden objects are skipped.</p>
+     </div>
      <div class="group snap-group"><h3>Precision snapping <small>TRANSFORM GIZMO</small></h3>
       <div class="snap-row"><div><strong>Position grid</strong><small>Snap movement to units</small></div><button id="snap-translation" class="switch" aria-pressed="false" aria-label="Position grid snapping"></button></div>
       <label class="snap-value"><span>Grid size</span><input id="grid-step" type="number" min="0.01" max="100" step="0.05" value="0.25"></label>
