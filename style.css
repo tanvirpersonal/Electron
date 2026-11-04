@@ -594,3 +594,14 @@ body.home-view #home-screen{display:grid}
  .topbar #flat-shading-btn{min-height:16px}
  .topbar .studio-presets .shade-extra{min-height:15px;padding:0 2px;font-size:6px}
 }
+
+/* Prevent the left tool rail from touching the compact two-row header. */
+@media (orientation:landscape) and (max-height:430px){
+ .rail{
+  top:calc(50% + 20px);
+  gap:1px;
+  padding:4px;
+ }
+ .rail .ibtn{width:30px;height:30px}
+ .rail .hsep{margin:2px auto}
+}
