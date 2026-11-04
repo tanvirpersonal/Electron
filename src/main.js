@@ -336,12 +336,12 @@ function setPivotEditMode(active,showMessage=true){
   if(selected.userData.editorLocked||!selected.visible){toast('Unlock and show the object first');return}
   if(!pivotEditMode)savedTransformSpace=transform.space||'world';
   pivotEditMode=true;const pivotButton=$('#pivot-edit-btn');if(pivotButton){pivotButton.classList.add('active');pivotButton.setAttribute('aria-pressed','true');pivotButton.textContent='Finish Pivot Editing';}
-  attachCurrentSelection();if(showMessage)toast('Move the pivot gizmo, not the object');
+  attachCurrentSelection();refreshFields();if(showMessage)toast('Move the pivot gizmo, not the object');
  }else{
   pivotEditMode=false;const pivotButton=$('#pivot-edit-btn');if(pivotButton){pivotButton.classList.remove('active');pivotButton.setAttribute('aria-pressed','false');pivotButton.textContent='Place Pivot';}
   pivotHandle.visible=false;transform.detach();transform.setSpace(savedTransformSpace||'world');transform.setMode(transformMode);
   if(selected&&selected.visible&&!selected.userData.editorLocked)transform.attach(selected);
-  if(showMessage)toast('Pivot edit mode off');
+  refreshFields();if(showMessage)toast('Pivot edit mode off');
  }
 }
 function handleTransformObjectChange(){
@@ -359,7 +359,7 @@ function handleTransformObjectChange(){
 document.querySelectorAll('[data-pivot-action]').forEach(button=>button.addEventListener('click',()=>setPivotPreset(button.dataset.pivotAction)));
 $('#pivot-edit-btn')?.addEventListener('click',()=>setPivotEditMode(!pivotEditMode));
 
-function refreshFields(){if(!selected)return;makeFields('#position-fields',['X','Y','Z'],[selected.position.x,selected.position.y,selected.position.z],'position');makeFields('#rotation-fields',['X','Y','Z'],[THREE.MathUtils.radToDeg(selected.rotation.x),THREE.MathUtils.radToDeg(selected.rotation.y),THREE.MathUtils.radToDeg(selected.rotation.z)],'rotation');makeFields('#scale-fields',['X','Y','Z'],[selected.scale.x,selected.scale.y,selected.scale.z],'scale');$('#scale-state').textContent=uniform?'UNIFORM':'FREE';$('#scale-hint').textContent=uniform?'Uniform mode: changing one axis updates all three axes.':'Scale each axis independently. Enable uniform scaling to resize proportionally.'}
+function refreshFields(){if(!selected)return;makeFields('#position-fields',['X','Y','Z'],[selected.position.x,selected.position.y,selected.position.z],'position');makeFields('#rotation-fields',['X','Y','Z'],[THREE.MathUtils.radToDeg(selected.rotation.x),THREE.MathUtils.radToDeg(selected.rotation.y),THREE.MathUtils.radToDeg(selected.rotation.z)],'rotation');makeFields('#scale-fields',['X','Y','Z'],[selected.scale.x,selected.scale.y,selected.scale.z],'scale');document.querySelectorAll('#position-fields input,#rotation-fields input,#scale-fields input').forEach(input=>input.disabled=pivotEditMode);if(pivotEditMode&&transform.object===pivotHandle)updatePivotHandle();$('#scale-state').textContent=uniform?'UNIFORM':'FREE';$('#scale-hint').textContent=uniform?'Uniform mode: changing one axis updates all three axes.':'Scale each axis independently. Enable uniform scaling to resize proportionally.'}
 function setMode(m){if(pivotEditMode)setPivotEditMode(false,false);transformMode=m;transform.setMode(m);document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===m))}
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
 [['translation','grid-step','grid'],['rotation','angle-step','angle'],['scale','scale-step','step']].forEach(([kind,inputId,setting])=>{
