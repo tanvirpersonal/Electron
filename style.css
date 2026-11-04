@@ -338,3 +338,6 @@ body.home-view #home-screen{display:grid}
 .distribute-btn{grid-column:2;justify-self:stretch}
 .align-group .btn:disabled{opacity:.3;cursor:not-allowed;filter:saturate(.3)}
 .align-group .hint{margin-top:9px}
+
+/* Object hierarchy tools */
+.hierarchy-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.hierarchy-actions .btn{min-width:0;min-height:38px;padding:0 7px;font-size:10px}
