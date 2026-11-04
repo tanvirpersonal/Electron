@@ -2,11 +2,11 @@ name: Build Android APK
 
 on:
   push:
-    branches: [main, '1']
+    branches: [main, '1', claude-eelctron]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # lets the job publish the APK as a GitHub Release
 
 jobs:
   android:
@@ -160,3 +160,16 @@ jobs:
           path: Electron.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Publish APK to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # One rolling release per branch, so the download link never changes:
+          # https://github.com/${{ github.repository }}/releases/download/apk-<branch>/Electron.apk
+          TAG="apk-${GITHUB_REF_NAME}"
+          gh release delete "$TAG" --cleanup-tag --yes || true
+          gh release create "$TAG" Electron.apk \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --title "Electron APK (${GITHUB_REF_NAME})" \
+            --notes "Debug APK built from ${GITHUB_SHA::7} on branch ${GITHUB_REF_NAME}. Allow installs from unknown sources to sideload it."
