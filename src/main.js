@@ -165,10 +165,51 @@ function renderList(){
   });
   row.append(selectButton,actions);list.append(row);
  });
- $('#object-count').textContent=objects.length+' OBJECT'+(objects.length===1?'':'S');
+ $('#object-count').textContent=objects.length+' OBJECT'+(objects.length===1?'':'S');updateAlignControls();
 }
 function makeFields(id,axes,values,type){const host=$(id);host.innerHTML='';axes.forEach((axis,i)=>{const label=document.createElement('label');label.className='axis-field';const b=document.createElement('b');b.textContent=axis;b.style.color=['#e28d8d','#8fcf9c','#8da9ed'][i];const input=document.createElement('input');input.type='number';input.step=type==='rotation'?1:.1;input.value=Number(values[i].toFixed(3));input.addEventListener('change',()=>{if(!selected||selected.userData.editorLocked)return;recordHistory();let v=Number(input.value)||0;const target=type==='position'?selected.position:type==='rotation'?selected.rotation:selected.scale;if(type==='rotation')target[axis.toLowerCase()]=THREE.MathUtils.degToRad(v);else if(type==='scale'&&uniform){if(!mirror)v=Math.max(.001,v);selected.scale.setScalar(v)}else{if(type==='scale'&&!mirror)v=Math.max(.001,v);target[axis.toLowerCase()]=v}refreshFields()});label.append(b,input);host.append(label)})}
 
+function selectedEditableObjects(){return selectedObjects.filter(object=>objects.includes(object)&&!object.userData.editorLocked&&object.visible)}
+function updateAlignControls(){
+ const count=selectedEditableObjects().length;
+ document.querySelectorAll('[data-align], [data-distribute]').forEach(button=>{button.disabled=count<(button.hasAttribute('data-distribute')?3:2);button.setAttribute('aria-disabled',String(button.disabled))});
+ const label=$('#align-selection-count');if(label)label.textContent=count+' editable selected';
+}
+function alignSelection(axis,edge){
+ const targets=selectedEditableObjects();if(targets.length<2){toast('Select at least 2 unlocked objects');return}
+ const reference=selected&&targets.includes(selected)?selected:targets[0];
+ reference.updateWorldMatrix(true,false);
+ const refBox=new THREE.Box3().setFromObject(reference);
+ const refValue=edge==='min'?refBox.min[axis]:edge==='max'?refBox.max[axis]:refBox.getCenter(new THREE.Vector3())[axis];
+ const changes=[];const before=targets.map(object=>({object,position:object.position.clone()}));
+ targets.forEach(object=>{
+  if(object===reference)return;
+  object.updateWorldMatrix(true,false);
+  const box=new THREE.Box3().setFromObject(object);
+  const current=edge==='min'?box.min[axis]:edge==='max'?box.max[axis]:box.getCenter(new THREE.Vector3())[axis];
+  const delta=refValue-current;
+  if(Math.abs(delta)>1e-7){changes.push(object);object.position[axis]+=delta}
+ });
+ if(changes.length){undoStack.push({objects:objects.map(cloneForHistory),selection:selectedObjects.map(object=>objects.indexOf(object)).filter(index=>index>=0),activeIndex:selected?objects.indexOf(selected):-1,nextId});if(undoStack.length>HISTORY_LIMIT)undoStack.shift();redoStack.length=0;syncHistoryButtons();}
+ refreshFields();renderList();toast('Aligned '+targets.length+' objects to '+reference.name);
+}
+function distributeSelection(axis){
+ const targets=selectedEditableObjects();if(targets.length<3){toast('Select at least 3 unlocked objects');return}
+ const entries=targets.map(object=>{object.updateWorldMatrix(true,false);const box=new THREE.Box3().setFromObject(object);return {object,min:box.min[axis],max:box.max[axis],size:box.max[axis]-box.min[axis]}}).sort((a,b)=>a.min-b.min);
+ const totalSpan=entries.at(-1).max-entries[0].min;
+ const totalSize=entries.reduce((sum,item)=>sum+item.size,0);
+ const gap=(totalSpan-totalSize)/(entries.length-1);
+ if(gap< -1e-6){toast('Objects overlap too much to distribute');return}
+ const snapshot={objects:objects.map(cloneForHistory),selection:selectedObjects.map(object=>objects.indexOf(object)).filter(index=>index>=0),activeIndex:selected?objects.indexOf(selected):-1,nextId};
+ let cursor=entries[0].min,changed=0;
+ entries.forEach((entry,index)=>{const delta=cursor-entry.min;if(Math.abs(delta)>1e-7){entry.object.position[axis]+=delta;changed++}cursor+=entry.size+gap});
+ if(changed){undoStack.push(snapshot);if(undoStack.length>HISTORY_LIMIT)undoStack.shift();redoStack.length=0;syncHistoryButtons()}
+ refreshFields();renderList();toast('Distributed '+targets.length+' objects evenly');
+}
+['x','y','z'].forEach(axis=>{
+ document.querySelectorAll('[data-align="'+axis+'"]').forEach(button=>button.addEventListener('click',()=>alignSelection(axis,button.dataset.edge)));
+ const distribute=$('[data-distribute="'+axis+'"]');distribute?.addEventListener('click',()=>distributeSelection(axis));
+});
 function getSelectedMeshes(){
  const roots=selectedObjects.length?selectedObjects:(selected?[selected]:[]);
  const meshes=[];
