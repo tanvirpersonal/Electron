@@ -183,6 +183,16 @@
       <div class="toggle-row"><div><strong>Mirror scaling</strong><small>Allow negative scale values</small></div><button id="mirror-toggle" class="switch" aria-pressed="false" aria-label="Mirror scaling"></button></div>
       <p class="hint" id="scale-hint">Scale each axis independently. Enable uniform scaling to resize proportionally.</p>
      </div>
+     <div class="group pivot-group"><h3>Pivot &amp; origin <small>NON-DESTRUCTIVE</small></h3>
+      <div class="pivot-presets">
+       <button class="btn" data-pivot-action="center" title="Set pivot to geometry center">Center</button>
+       <button class="btn" data-pivot-action="bottom" title="Set pivot to bottom center">Bottom</button>
+       <button class="btn" data-pivot-action="world" title="Set pivot to world origin">World 0</button>
+       <button class="btn" data-pivot-action="original" title="Restore the original pivot">Original</button>
+      </div>
+      <button id="pivot-edit-btn" class="btn pivot-edit-btn" aria-pressed="false">Place Pivot</button>
+      <p class="hint">Presets move the origin without moving visible geometry. Place Pivot lets you drag the XYZ gizmo to a custom position. Rotate and Scale will then use the new pivot.</p>
+     </div>
      <div class="group"><h3>Actions</h3>
       <div class="btn-row">
        <button id="duplicate-btn" class="btn"><svg class="ic"><use href="#i-copy"/></svg>Duplicate</button>
