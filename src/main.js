@@ -310,7 +310,7 @@ document.addEventListener('fullscreenchange',()=>{const active=!!document.fullsc
 function setCameraView(direction,label='Camera view'){
  const distance=Math.max(camera.position.distanceTo(orbit.target),6);
  camera.position.copy(orbit.target).add(direction.clone().normalize().multiplyScalar(distance));
- camera.up.set(0,1,0);camera.lookAt(orbit.target);orbit.update();toast(label);
+ camera.up.copy(Math.abs(direction.y)>.99?new THREE.Vector3(0,0,-1):new THREE.Vector3(0,1,0));camera.lookAt(orbit.target);orbit.update();toast(label);
 }
 function frameAll(){
  if(!objects.length){orbit.target.set(0,.8,0);camera.position.set(7,6,8);orbit.update();return}
