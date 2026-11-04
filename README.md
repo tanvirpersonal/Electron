@@ -37,7 +37,7 @@ Keyboard shortcuts (for emulators and Bluetooth keyboards): `W` / `E` / `R` move
 - Landscape-first Android workspace, also usable in portrait
 - Touch-friendly realtime 3D viewport: orbit, pinch zoom and pan
 - 15 shapes: cube, sphere, cylinder, cone, torus, capsule, plane, circle, ring, icosphere, dodecahedron, octahedron, tetrahedron, torus knot, triangular prism
-- Scene list with per-shape icons and object selection
+- Scene list with per-shape icons, object selection, rename, hide/show and lock/unlock controls
 - Move, rotate and scale gizmos
 - Numeric position, rotation and scale fields
 - Uniform scaling and mirror scaling
@@ -62,12 +62,13 @@ The same list is shown inside the app under the **Roadmap** tab.
 - ✅ Multi-select, touch drag, long-press menu
 - ✅ Material: color, roughness, metalness, opacity
 - ✅ GLB / glTF / OBJ import, GLB export + share
+- ✅ Undo / redo history (35 steps), including scene, transform and material edits
 - ✅ Immersive fullscreen, Android APK build
 
 ### Editing and workflow
 
-- 🔜 Undo / redo history
-- 🔜 Rename, hide and lock objects
+- ✅ Undo / redo history
+- ✅ Rename, hide/show and lock/unlock objects
 - 🔜 Collections and parenting
 - 🔜 Snapping: grid, angle, scale step
 - 🕒 Align and distribute
